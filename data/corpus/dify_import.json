@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "description": "移动运维知识库标准导入格式",
+  "segments": [
+    {
+      "question": "CPU 一直 90% 怎么办",
+      "answer": "先看 top 找进程",
+      "keywords": [
+        "服务器故障"
+      ]
+    },
+    {
+      "question": "MySQL 主从延迟 怎么查",
+      "answer": "show slave status 看 Seconds_Behind_Master",
+      "keywords": [
+        "数据库报错"
+      ]
+    },
+    {
+      "question": "Oracle表空间满了",
+      "answer": "查 dba_data_files 使用率，清理归档日志",
+      "keywords": [
+        "数据库报错"
+      ]
+    },
+    {
+      "question": "LTE基站退服先查什么",
+      "answer": "查传输光路、RRU链路、小区状态",
+      "keywords": [
+        "基站运维"
+      ]
+    },
+    {
+      "question": "工单挂起超过 SLA 怎么处理",
+      "answer": "确认节点审批人、升级至二线并记录原因",
+      "keywords": [
+        "工单流程"
+      ]
+    }
+  ]
+}

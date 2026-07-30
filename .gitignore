@@ -1,0 +1,21 @@
+.env
+storage/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 日志文件
+*.log
+
+# 其他环境配置（保留模板）
+.env.*
+!.env.example
+
+# 测试缓存
+.pytest_cache/
+
+# 本地数据库
+*.db
+*.sqlite
+*.sqlite3

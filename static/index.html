@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>移动运维工单智能答疑 · 自测</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f5f7fb;
+      color: #1a1a2e;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    .sub { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      margin-bottom: 16px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      resize: vertical;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 24px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .samples { margin-top: 10px; }
+    .samples span {
+      display: inline-block;
+      margin: 4px 6px 4px 0;
+      padding: 4px 10px;
+      background: #eef2ff;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #3730a3;
+    }
+    .answer {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .meta { color: #888; font-size: 12px; margin-top: 12px; }
+    .error { color: #dc2626; }
+    .loading { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>移动运维工单智能答疑机器人</h1>
+  <p class="sub">模块 4 · 功能自测页 · 对接 Dify 云端 API</p>
+
+  <div class="card">
+    <label for="question"><strong>输入运维问题</strong></label>
+    <textarea id="question" placeholder="例如：MySQL 主从延迟告警怎么处理？"></textarea>
+    <div class="samples">
+      快捷问题：
+      <span data-q="MySQL主从延迟告警怎么处理？">主从延迟</span>
+      <span data-q="服务器CPU持续90%怎么排查？">CPU 告警</span>
+      <span data-q="LTE基站退服应该先查什么？">基站退服</span>
+      <span data-q="工单在二线审批卡住超过4小时怎么办？">工单流程</span>
+    </div>
+    <button id="submitBtn">提交咨询</button>
+  </div>
+
+  <div class="card">
+    <strong>AI 答疑结果</strong>
+    <div id="result" class="answer meta">等待提问…</div>
+    <div id="meta" class="meta"></div>
+  </div>
+
+  <script>
+    const API_BASE = "";  // 同源，由 Flask 提供 /api/chat
+
+    document.querySelectorAll(".samples span").forEach(el => {
+      el.addEventListener("click", () => {
+        document.getElementById("question").value = el.dataset.q;
+      });
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", submitQuestion);
+    document.getElementById("question").addEventListener("keydown", e => {
+      if (e.ctrlKey && e.key === "Enter") submitQuestion();
+    });
+
+    async function submitQuestion() {
+      const btn = document.getElementById("submitBtn");
+      const resultEl = document.getElementById("result");
+      const metaEl = document.getElementById("meta");
+      const question = document.getElementById("question").value.trim();
+
+      if (!question) {
+        resultEl.innerHTML = '<span class="error">请输入问题</span>';
+        return;
+      }
+
+      btn.disabled = true;
+      resultEl.innerHTML = '<span class="loading">正在调用 Dify AI…</span>';
+      metaEl.textContent = "";
+
+      try {
+        const resp = await fetch(`${API_BASE}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || "请求失败");
+        resultEl.textContent = data.answer || "(无回答)";
+        const refs = (data.retriever_resources || []).length;
+        metaEl.textContent = `conversation_id: ${data.conversation_id || "-"} | 引用片段: ${refs}`;
+      } catch (err) {
+        resultEl.innerHTML = `<span class="error">${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

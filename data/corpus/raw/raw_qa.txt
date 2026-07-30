@@ -1,0 +1,23 @@
+# 原始杂乱语料（供 data_clean.py 清洗演示）
+
+# 服务器故障
+Q: CPU 一直 90% 怎么办？？？
+A:   先看 top  找进程!!!
+
+Q: CPU 一直 90% 怎么办？？？
+A:   先看 top  找进程!!!
+
+# 数据库报错
+Q: MySQL  主从延迟  怎么查
+A: show slave status 看 Seconds_Behind_Master
+
+Q: !!!Oracle表空间满了!!!
+A: 查 dba_data_files 使用率，清理归档日志
+
+# 基站运维
+Q: LTE基站退服先查什么
+A: 查传输光路、RRU链路、小区状态
+
+# 工单流程
+Q: 工单挂起超过 SLA 怎么处理
+A: 确认节点审批人、升级至二线并记录原因
