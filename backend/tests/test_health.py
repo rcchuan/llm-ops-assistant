@@ -1,0 +1,34 @@
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_health_database_up(monkeypatch) -> None:
+    monkeypatch.setattr("app.api.v1.health.check_database", lambda: True)
+
+    response = client.get("/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "service": "llm-ops-assistant-backend",
+        "version": "0.2.0",
+        "database": {"status": "up"},
+    }
+
+
+def test_health_database_down(monkeypatch) -> None:
+    monkeypatch.setattr("app.api.v1.health.check_database", lambda: False)
+
+    response = client.get("/api/v1/health")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "degraded",
+        "service": "llm-ops-assistant-backend",
+        "version": "0.2.0",
+        "database": {"status": "down"},
+    }
+    assert "password" not in response.text.lower()

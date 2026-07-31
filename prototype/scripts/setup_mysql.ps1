@@ -8,9 +8,13 @@ $ProjectRoot = "D:\Dify_agent"
 $MySqlRoot = "C:\Program Files\MySQL\MySQL Server 8.4"
 $Bin = Join-Path $MySqlRoot "bin"
 $DataDir = Join-Path $ProjectRoot "storage\mysql\data"
-$RootPassword = "DifyOps@2026"
+$RootPassword = $env:DIFY_OPS_MYSQL_ROOT_PASSWORD
 $ProjectEnv = Join-Path $ProjectRoot ".env"
 $Port = 3306
+
+if ([string]::IsNullOrWhiteSpace($RootPassword)) {
+    throw "请先设置 DIFY_OPS_MYSQL_ROOT_PASSWORD 环境变量"
+}
 
 Write-Host "=== MySQL setup (project datadir) ===" -ForegroundColor Cyan
 
@@ -59,6 +63,5 @@ if ($userPath -notlike "*$Bin*") {
 Write-Host ""
 Write-Host "MySQL ready!" -ForegroundColor Green
 Write-Host "  datadir : $DataDir"
-Write-Host "  password: $RootPassword"
 Write-Host "  port    : $Port"
 Write-Host "Next: python scripts/init_db.py"
