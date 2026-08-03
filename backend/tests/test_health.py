@@ -14,7 +14,7 @@ def test_health_database_up(monkeypatch) -> None:
     assert response.json() == {
         "status": "ok",
         "service": "llm-ops-assistant-backend",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "database": {"status": "up"},
     }
 
@@ -28,7 +28,7 @@ def test_health_database_down(monkeypatch) -> None:
     assert response.json() == {
         "status": "degraded",
         "service": "llm-ops-assistant-backend",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "database": {"status": "down"},
     }
     assert "password" not in response.text.lower()

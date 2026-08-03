@@ -1,6 +1,6 @@
 # Vue 3 前端
 
-阶段 1 前端只展示正式后端与 MySQL 的健康状态，不包含登录、问答、工单或数据看板。
+阶段 2 前端提供登录、强制/主动修改密码、基础首页和管理员用户管理。界面使用现有 Element Plus，按桌面端企业运维平台的信息密度重新设计，不使用后台模板或第二套 UI 框架。
 
 ## 配置与启动
 
@@ -19,6 +19,23 @@ npm run dev
 npm run build
 ```
 
-`VITE_API_BASE_URL` 只保存公开的后端 API 地址。数据库凭证和 Dify Key 不得放入前端配置。
+`VITE_API_BASE_URL` 只保存公开的后端 API 地址。数据库凭证、JWT Secret、用户密码和 Dify Key 不得放入前端配置。
 
-开发环境由浏览器直接访问 FastAPI，后端 CORS 仅允许配置的前端地址；本阶段不同时配置 Vite proxy。
+## 认证流程
+
+- 未登录访问受保护页面会转到 `/login`。
+- 登录后通过 `/auth/me` 恢复用户状态。
+- `must_change_password=true` 时只能进入 `/change-password`。
+- 管理员可访问 `/admin/users`，普通运维人员会被送回安全首页。
+- 退出、401 或改密成功后清除 Access Token。
+- 403 + `PASSWORD_CHANGE_REQUIRED` 会转到强制改密页。
+
+## Token 存储风险
+
+阶段 2 使用 LocalStorage 保存 2 小时 Access Token，适合本地毕设演示，但 LocalStorage 会受到 XSS（跨站脚本）风险影响。当前不实现 Cookie、Refresh Token 或服务端撤销列表；后续正式部署可结合完整威胁模型重新设计认证存储。
+
+## 桌面端范围
+
+- 最低验收分辨率：`1280×720`
+- 推荐分辨率：`1920×1080`
+- 本阶段不承诺小于 1280px 的完整操作体验，不实现移动端布局。

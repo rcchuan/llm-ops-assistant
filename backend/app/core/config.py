@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "llm-ops-assistant-backend"
-    app_version: str = "0.2.0"
+    app_version: str = "0.3.0"
     app_env: str = "development"
     api_v1_prefix: str = "/api/v1"
     backend_host: str = "127.0.0.1"
@@ -26,6 +26,26 @@ class Settings(BaseSettings):
     mysql_user: str = ""
     mysql_password: SecretStr = SecretStr("")
     mysql_database: str = ""
+
+    jwt_secret_key: SecretStr = SecretStr("")
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 120
+
+    initial_admin_username: str = ""
+    initial_admin_display_name: str = ""
+    initial_admin_password: SecretStr = SecretStr("")
+    initial_admin_enabled: bool = False
+
+    @model_validator(mode="after")
+    def validate_security_config(self) -> "Settings":
+        if self.app_env.lower() not in {"development", "test"}:
+            if not self.jwt_secret_key.get_secret_value():
+                raise ValueError("非开发环境必须配置 JWT_SECRET_KEY")
+        if self.jwt_algorithm != "HS256":
+            raise ValueError("阶段 2 仅允许 JWT_ALGORITHM=HS256")
+        if self.access_token_expire_minutes != 120:
+            raise ValueError("阶段 2 Access Token 有效期必须为 120 分钟")
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:
