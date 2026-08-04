@@ -1,12 +1,23 @@
-import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import decode_access_token
+from app.core.exceptions import (
+    AdminRequiredError,
+    AuthenticationConfigurationError,
+    InactiveUserError,
+    InvalidCredentialsError,
+    PasswordChangeRequiredError,
+)
 from app.db.session import get_db
-from app.models.user import User, UserRole
+from app.models.user import User
+from app.repositories.user_repository import UserRepository
+from app.services.auth_service import (
+    ensure_admin,
+    ensure_password_changed,
+    resolve_current_user,
+)
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -24,43 +35,37 @@ def get_current_user(
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise unauthorized
 
-    settings = get_settings()
-    secret_key = settings.jwt_secret_key.get_secret_value()
-    if not secret_key:
-        raise HTTPException(status_code=503, detail="认证服务未配置")
     try:
-        claims = decode_access_token(credentials.credentials, secret_key, settings.jwt_algorithm)
-        user_id = int(claims["sub"])
-    except (jwt.PyJWTError, KeyError, TypeError, ValueError):
+        return resolve_current_user(
+            UserRepository(session),
+            token=credentials.credentials,
+            settings=get_settings(),
+        )
+    except InvalidCredentialsError:
         raise unauthorized from None
-
-    user = session.get(User, user_id)
-    if user is None:
-        raise unauthorized
-    if not user.is_active:
+    except InactiveUserError:
         raise HTTPException(status_code=403, detail="账号已禁用")
-    if (
-        claims.get("username") != user.username
-        or claims.get("role") != user.role.value
-        or claims.get("token_version") != user.token_version
-    ):
-        raise unauthorized
-    return user
+    except AuthenticationConfigurationError:
+        raise HTTPException(status_code=503, detail="认证服务未配置") from None
 
 
 def require_password_changed(user: User = Depends(get_current_user)) -> User:
-    if user.must_change_password:
+    try:
+        ensure_password_changed(user)
+    except PasswordChangeRequiredError:
         raise HTTPException(
             status_code=403,
             detail={
                 "code": "PASSWORD_CHANGE_REQUIRED",
                 "message": "首次登录必须修改密码",
             },
-        )
+        ) from None
     return user
 
 
 def require_admin(user: User = Depends(require_password_changed)) -> User:
-    if user.role is not UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="需要管理员权限")
+    try:
+        ensure_admin(user)
+    except AdminRequiredError:
+        raise HTTPException(status_code=403, detail="需要管理员权限") from None
     return user

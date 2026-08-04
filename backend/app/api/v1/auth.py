@@ -1,11 +1,13 @@
-from datetime import timedelta
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.config import get_settings
-from app.core.security import create_access_token
+from app.core.exceptions import (
+    AuthenticationConfigurationError,
+    InactiveUserError,
+    InvalidCredentialsError,
+)
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import (
@@ -15,7 +17,8 @@ from app.schemas.auth import (
     MessageResponse,
 )
 from app.schemas.user import UserRead
-from app.services.auth_service import authenticate_user, change_password, record_login
+from app.repositories.user_repository import UserRepository
+from app.services.auth_service import change_password, login_user
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -23,29 +26,22 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=LoginResponse)
 def login(payload: LoginRequest, session: Session = Depends(get_db)) -> LoginResponse:
-    user = authenticate_user(session, payload.username, payload.password)
-    if user is None:
+    try:
+        user, token, expires_in = login_user(
+            UserRepository(session),
+            username=payload.username,
+            password=payload.password,
+            settings=get_settings(),
+        )
+    except InvalidCredentialsError:
         raise HTTPException(status_code=401, detail="用户名或密码错误")
-    if not user.is_active:
+    except InactiveUserError:
         raise HTTPException(status_code=403, detail="账号已禁用")
-
-    settings = get_settings()
-    secret_key = settings.jwt_secret_key.get_secret_value()
-    if not secret_key:
-        raise HTTPException(status_code=503, detail="认证服务未配置")
-    record_login(session, user)
-    token = create_access_token(
-        user_id=user.id,
-        username=user.username,
-        role=user.role.value,
-        token_version=user.token_version,
-        secret_key=secret_key,
-        algorithm=settings.jwt_algorithm,
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
-    )
+    except AuthenticationConfigurationError:
+        raise HTTPException(status_code=503, detail="认证服务未配置") from None
     return LoginResponse(
         access_token=token,
-        expires_in=settings.access_token_expire_minutes * 60,
+        expires_in=expires_in,
         user=UserRead.model_validate(user),
     )
 
@@ -63,7 +59,7 @@ def update_password(
 ) -> MessageResponse:
     try:
         change_password(
-            session,
+            UserRepository(session),
             user,
             current_password=payload.current_password,
             new_password=payload.new_password,

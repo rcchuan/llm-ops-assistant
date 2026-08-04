@@ -2,6 +2,12 @@
 
 阶段 2 后端提供 MySQL 健康检查、JWT 登录、当前用户识别、修改密码、角色权限、初始管理员引导和管理员用户管理。
 
+## 后端架构
+
+认证与用户管理采用轻量 `Router -> Service -> Repository -> SQLAlchemy/MySQL` 分层。Router 只处理 HTTP，Service 承载业务规则，Repository 负责查询和持久化；阶段 3 的外部服务调用统一从 `Service -> Integration` 接入。
+
+详细职责、调用链和扩展规则见 [`docs/backend-layering.md`](../docs/backend-layering.md)。
+
 ## 配置
 
 ```powershell

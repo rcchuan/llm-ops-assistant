@@ -2,8 +2,8 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core.user_validation import normalize_display_name, normalize_username
 from app.models.user import UserRole
-from app.services.user_service import normalize_display_name, normalize_username
 
 
 class UserRead(BaseModel):

@@ -1,11 +1,17 @@
+from typing import NoReturn
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_admin
-from app.core.security import hash_password, validate_password_strength
+from app.core.exceptions import (
+    OperatorOnlyOperationError,
+    UsernameAlreadyExistsError,
+    UserNotFoundError,
+)
 from app.db.session import get_db
-from app.models.user import User, UserRole
+from app.models.user import User
+from app.repositories.user_repository import UserRepository
 from app.schemas.auth import MessageResponse
 from app.schemas.user import (
     PasswordReset,
@@ -17,21 +23,24 @@ from app.schemas.user import (
 from app.services.user_service import (
     create_operator,
     get_user,
-    get_user_by_username,
     list_users,
+    reset_operator_password,
+    update_operator_status,
 )
 
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-def operator_or_error(session: Session, user_id: int) -> User:
-    user = get_user(session, user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    if user.role is not UserRole.OPERATOR:
-        raise HTTPException(status_code=403, detail="该操作仅允许用于普通运维人员")
-    return user
+def map_user_operation_error(error: Exception) -> NoReturn:
+    if isinstance(error, UserNotFoundError):
+        raise HTTPException(status_code=404, detail="用户不存在") from None
+    if isinstance(error, OperatorOnlyOperationError):
+        raise HTTPException(
+            status_code=403,
+            detail="该操作仅允许用于普通运维人员",
+        ) from None
+    raise error
 
 
 @router.get("", response_model=UserList)
@@ -42,7 +51,12 @@ def read_users(
     _admin: User = Depends(require_admin),
     session: Session = Depends(get_db),
 ) -> UserList:
-    users, total = list_users(session, page=page, page_size=page_size, query=q)
+    users, total = list_users(
+        UserRepository(session),
+        page=page,
+        page_size=page_size,
+        query=q,
+    )
     return UserList(items=users, total=total, page=page, page_size=page_size)
 
 
@@ -52,10 +66,10 @@ def read_user(
     _admin: User = Depends(require_admin),
     session: Session = Depends(get_db),
 ) -> User:
-    user = get_user(session, user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    return user
+    try:
+        return get_user(UserRepository(session), user_id)
+    except UserNotFoundError as error:
+        map_user_operation_error(error)
 
 
 @router.post("", response_model=UserRead, status_code=201)
@@ -64,19 +78,16 @@ def create_user(
     _admin: User = Depends(require_admin),
     session: Session = Depends(get_db),
 ) -> User:
-    if get_user_by_username(session, payload.username):
-        raise HTTPException(status_code=409, detail="用户名已存在")
     try:
         return create_operator(
-            session,
+            UserRepository(session),
             username=payload.username,
             display_name=payload.display_name,
             initial_password=payload.initial_password,
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from None
-    except IntegrityError:
-        session.rollback()
+    except UsernameAlreadyExistsError:
         raise HTTPException(status_code=409, detail="用户名已存在") from None
 
 
@@ -87,13 +98,14 @@ def update_status(
     _admin: User = Depends(require_admin),
     session: Session = Depends(get_db),
 ) -> User:
-    user = operator_or_error(session, user_id)
-    if user.is_active and not payload.is_active:
-        user.token_version += 1
-    user.is_active = payload.is_active
-    session.commit()
-    session.refresh(user)
-    return user
+    try:
+        return update_operator_status(
+            UserRepository(session),
+            user_id,
+            is_active=payload.is_active,
+        )
+    except (UserNotFoundError, OperatorOnlyOperationError) as error:
+        map_user_operation_error(error)
 
 
 @router.post("/{user_id}/reset-password", response_model=MessageResponse)
@@ -103,13 +115,14 @@ def reset_password(
     _admin: User = Depends(require_admin),
     session: Session = Depends(get_db),
 ) -> MessageResponse:
-    user = operator_or_error(session, user_id)
     try:
-        validate_password_strength(payload.new_password)
-        user.password_hash = hash_password(payload.new_password)
+        reset_operator_password(
+            UserRepository(session),
+            user_id,
+            new_password=payload.new_password,
+        )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from None
-    user.must_change_password = True
-    user.token_version += 1
-    session.commit()
+    except (UserNotFoundError, OperatorOnlyOperationError) as error:
+        map_user_operation_error(error)
     return MessageResponse(message="密码已重置，用户下次登录必须修改密码")

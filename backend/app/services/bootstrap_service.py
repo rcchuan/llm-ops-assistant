@@ -1,21 +1,16 @@
 import logging
 
-from sqlalchemy.orm import Session
-
 from app.core.config import Settings
 from app.core.security import hash_password, validate_password_strength
+from app.core.user_validation import normalize_display_name, normalize_username
 from app.models.user import User, UserRole
-from app.services.user_service import (
-    get_user_by_username,
-    normalize_display_name,
-    normalize_username,
-)
+from app.repositories.user_repository import UserRepository
 
 
 logger = logging.getLogger(__name__)
 
 
-def bootstrap_initial_admin(session: Session, settings: Settings) -> bool:
+def bootstrap_initial_admin(repository: UserRepository, settings: Settings) -> bool:
     if not settings.initial_admin_enabled:
         return False
 
@@ -32,13 +27,13 @@ def bootstrap_initial_admin(session: Session, settings: Settings) -> bool:
     username = normalize_username(settings.initial_admin_username)
     display_name = normalize_display_name(settings.initial_admin_display_name)
     validate_password_strength(password)
-    existing = get_user_by_username(session, username)
+    existing = repository.get_by_username(username)
     if existing:
         if existing.role is UserRole.ADMIN:
             return False
         raise RuntimeError("初始管理员用户名已被普通用户占用")
 
-    session.add(
+    repository.add(
         User(
             username=username,
             display_name=display_name,
@@ -48,6 +43,5 @@ def bootstrap_initial_admin(session: Session, settings: Settings) -> bool:
             must_change_password=True,
         )
     )
-    session.commit()
     logger.info("初始管理员账号已创建：%s", username)
     return True
