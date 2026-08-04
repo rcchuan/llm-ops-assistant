@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.repositories.user_repository import UserRepository
 from app.services.bootstrap_service import bootstrap_initial_admin
 
 settings = get_settings()
@@ -15,7 +16,7 @@ settings = get_settings()
 async def lifespan(_app: FastAPI):
     if settings.initial_admin_enabled:
         with SessionLocal() as session:
-            bootstrap_initial_admin(session, settings)
+            bootstrap_initial_admin(UserRepository(session), settings)
     yield
 
 

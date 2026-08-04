@@ -102,6 +102,17 @@ def test_admin_creates_and_reads_operator_without_exposing_hash(client, add_user
     )
     assert duplicate.status_code == 409
 
+    duplicate_with_weak_password = client.post(
+        "/api/v1/users",
+        headers=headers,
+        json={
+            "username": "NEWOPERATOR01",
+            "display_name": "重复用户",
+            "initial_password": "onlyletters",
+        },
+    )
+    assert duplicate_with_weak_password.status_code == 409
+
     create_admin = client.post(
         "/api/v1/users",
         headers=headers,

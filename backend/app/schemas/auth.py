@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.user import UserRead
-from app.services.user_service import normalize_username
+from app.core.user_validation import normalize_username
 
 
 class LoginRequest(BaseModel):
