@@ -2,7 +2,7 @@
 
 本科毕业设计项目，目标是建立“智能问答 → 未解决问题转工单 → 管理员处理 → 解决方案沉淀知识 → Dify 知识库复用”的业务闭环。
 
-当前完成阶段 2：保留 Flask 原型，正式 Vue 3 + FastAPI 系统已具备用户认证、普通运维人员与管理员角色权限、首次强制改密和管理员用户管理。
+当前完成阶段 3：保留 Flask 原型，正式 Vue 3 + FastAPI 系统已具备认证与用户管理，并通过后端 Dify Integration 提供连续智能运维问答、最近会话恢复、个人历史和反馈。
 
 ## 技术栈
 
@@ -11,7 +11,7 @@
 - 认证：Argon2 密码哈希、JWT Access Token
 - 数据库：MySQL 8
 - 测试：Pytest、隔离 SQLite、浏览器流程验证
-- AI 与知识库：Dify Cloud API，仍由 Flask 原型验证，尚未迁入正式后端
+- AI 与知识库：Dify Cloud Chatflow API，由 FastAPI Integration 适配，前端不接触 Dify 凭证
 
 ## 目录
 
@@ -32,13 +32,13 @@ deployment/  后续部署说明
 4. 临时启用初始管理员引导并启动 FastAPI；创建成功后关闭开关并清空初始密码配置。
 5. 启动 Vue 前端并使用管理员账号完成首次改密。
 
-详细命令见 [backend/README.md](backend/README.md) 和 [frontend/README.md](frontend/README.md)。认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)。
+详细命令见 [backend/README.md](backend/README.md) 和 [frontend/README.md](frontend/README.md)。认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)，智能问答契约见 [docs/intelligent-chat.md](docs/intelligent-chat.md)。
 
 ## 当前范围
 
-已实现：Flask 原型隔离、FastAPI/Vue 工程、MySQL 健康检查、用户登录、2 小时 Access Token、首次强制改密、角色权限和管理员用户管理。
+已实现：Flask 原型隔离、FastAPI/Vue 工程、MySQL 健康检查、认证与用户管理、Dify blocking 问答、单页连续对话、最近会话恢复、最近 50 条个人历史和本地反馈。
 
-尚未实现：正式 Dify 问答、问答历史、工单流转、知识管理、统计看板、Refresh Token、注册和密码找回。
+尚未实现：工单流转、知识库管理、多会话管理、流式输出、统计看板、Refresh Token、注册和密码找回。
 
 ## 安全边界
 

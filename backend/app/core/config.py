@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import SecretStr, model_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -36,6 +36,18 @@ class Settings(BaseSettings):
     initial_admin_password: SecretStr = SecretStr("")
     initial_admin_enabled: bool = False
 
+    dify_base_url: str = "https://api.dify.ai/v1"
+    dify_app_api_key: SecretStr = SecretStr("")
+    dify_timeout_seconds: int = 60
+
+    @field_validator("dify_base_url")
+    @classmethod
+    def normalize_dify_base_url(cls, value: str) -> str:
+        normalized = value.strip().rstrip("/")
+        if not normalized:
+            raise ValueError("DIFY_BASE_URL 不能为空")
+        return normalized
+
     @model_validator(mode="after")
     def validate_security_config(self) -> "Settings":
         if self.app_env.lower() not in {"development", "test"}:
@@ -45,6 +57,8 @@ class Settings(BaseSettings):
             raise ValueError("阶段 2 仅允许 JWT_ALGORITHM=HS256")
         if self.access_token_expire_minutes != 120:
             raise ValueError("阶段 2 Access Token 有效期必须为 120 分钟")
+        if self.dify_timeout_seconds != 60:
+            raise ValueError("阶段 3 Dify 超时必须为 60 秒")
         return self
 
     @property
