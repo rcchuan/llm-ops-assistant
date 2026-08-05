@@ -3,6 +3,8 @@ import { createRouter, createWebHistory } from "vue-router"
 import AppLayout from "../layouts/AppLayout.vue"
 import { useAuth } from "../stores/auth"
 import ChangePasswordView from "../views/ChangePasswordView.vue"
+import ChatHistoryView from "../views/ChatHistoryView.vue"
+import ChatView from "../views/ChatView.vue"
 import HomeView from "../views/HomeView.vue"
 import LoginView from "../views/LoginView.vue"
 import UserManagementView from "../views/admin/UserManagementView.vue"
@@ -17,6 +19,8 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: "", component: HomeView },
+        { path: "chat", component: ChatView },
+        { path: "chat/history", component: ChatHistoryView },
         { path: "change-password", component: ChangePasswordView },
         {
           path: "admin/users",

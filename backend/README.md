@@ -1,10 +1,10 @@
 # FastAPI 后端
 
-阶段 2 后端提供 MySQL 健康检查、JWT 登录、当前用户识别、修改密码、角色权限、初始管理员引导和管理员用户管理。
+阶段 3 后端在认证与用户管理基础上，提供 Dify 智能问答、最近会话恢复、个人历史和反馈。
 
 ## 后端架构
 
-认证与用户管理采用轻量 `Router -> Service -> Repository -> SQLAlchemy/MySQL` 分层。Router 只处理 HTTP，Service 承载业务规则，Repository 负责查询和持久化；阶段 3 的外部服务调用统一从 `Service -> Integration` 接入。
+后端采用轻量 `Router -> Service -> Repository / Integration` 分层。Router 只处理 HTTP，Service 承载业务规则，Repository 负责 SQLAlchemy 查询和持久化，Dify Integration 只适配外部请求与响应。
 
 详细职责、调用链和扩展规则见 [`docs/backend-layering.md`](../docs/backend-layering.md)。
 
@@ -27,6 +27,10 @@ MYSQL_DATABASE=dify_ops
 JWT_SECRET_KEY=<至少32字节的随机值>
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=120
+
+DIFY_BASE_URL=https://api.dify.ai/v1
+DIFY_APP_API_KEY=<Dify App API Key>
+DIFY_TIMEOUT_SECONDS=60
 ```
 
 可用以下命令在本机生成 JWT Secret：
@@ -42,7 +46,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```sql
 CREATE USER IF NOT EXISTS 'llm_ops_app'@'%' IDENTIFIED BY '<STRONG_PASSWORD>';
 ALTER USER 'llm_ops_app'@'%' IDENTIFIED BY '<STRONG_PASSWORD>';
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP, REFERENCES
 ON dify_ops.* TO 'llm_ops_app'@'%';
 FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'llm_ops_app'@'%';
@@ -90,6 +94,16 @@ INITIAL_ADMIN_ENABLED=false
 ```
 
 自动化测试使用隔离 SQLite，不连接或污染远程 MySQL。共享开发库不执行 destructive downgrade（破坏性降级）。
+
+## 智能问答 API
+
+- `GET /api/v1/chat/current`：恢复当前用户最近一次已保存会话。
+- `POST /api/v1/chat/messages`：发送问题；`start_new=true` 时断开旧 Dify 上下文。
+- `POST /api/v1/chat/new`：返回新对话状态，不立即写数据库。
+- `GET /api/v1/chat/history?limit=50`：读取当前用户最近 50 条记录。
+- `PUT /api/v1/chat/messages/{id}/feedback`：保存或覆盖本地反馈。
+
+所有接口要求已登录且完成强制改密。operator 和 admin 都只能访问自己的问答数据。Dify 成功但数据库保存失败时仍返回回答，并标记 `persisted=false`、锁定当前对话；外部错误、Dify ID 和原始响应不会暴露给前端。
 
 ## 认证规则
 

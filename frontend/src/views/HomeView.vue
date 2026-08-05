@@ -96,8 +96,8 @@ onMounted(checkHealth)
     </section>
 
     <section class="scope-note">
-      <strong>阶段 2</strong>
-      <span>用户认证与角色权限已建立，智能问答等业务功能将在后续阶段开发。</span>
+      <strong>阶段 3</strong>
+      <span>用户认证、角色权限与智能运维问答已接入正式系统。</span>
     </section>
   </div>
 </template>
