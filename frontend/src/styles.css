@@ -801,6 +801,97 @@ code {
   overflow-wrap: anywhere;
 }
 
+.data-panel,
+.form-panel,
+.detail-panel {
+  min-height: 240px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--ops-border);
+  border-radius: 4px;
+}
+
+.data-panel .el-table__row {
+  cursor: pointer;
+}
+
+.data-panel .el-pagination {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.form-panel,
+.detail-panel {
+  max-width: 980px;
+}
+
+.source-question {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e3e8ed;
+}
+
+.source-question strong,
+.detail-grid dt {
+  color: #45617b;
+  font-size: 13px;
+}
+
+.source-question p {
+  margin: 6px 0 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.source-question .source-time {
+  margin: 14px 0 0;
+  color: var(--ops-text-muted);
+  font-size: 13px;
+}
+
+.detail-grid .source-list {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.detail-grid {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+.detail-grid > div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.detail-grid dd {
+  margin: 0;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.pre-line {
+  white-space: pre-wrap;
+}
+
+.processing-form,
+.confirmation-panel,
+.result-block {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #e3e8ed;
+}
+
+.action-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

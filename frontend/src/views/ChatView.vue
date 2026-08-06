@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from "vue"
 import { ChatDotRound, Delete, Promotion } from "@element-plus/icons-vue"
+import { useRouter } from "vue-router"
 
 import { getCurrentChat, sendChatMessage, startNewChat, updateChatFeedback } from "../api/chat"
 import { getApiErrorMessage } from "../api/http"
+import { getWorkOrderLinks } from "../api/workOrders"
 import SourceList from "../components/chat/SourceList.vue"
+import { useAuth } from "../stores/auth"
 import type { ChatMessage, Feedback } from "../types/chat"
+import { hasKnownWorkOrderLink } from "../utils/workOrderLinks"
 
 const quickQuestions = [
   "MySQL 主从延迟怎么排查？",
@@ -15,6 +19,9 @@ const quickQuestions = [
 ]
 
 const messages = ref<ChatMessage[]>([])
+const workOrderLinks = ref<Record<number, number | null>>({})
+const auth = useAuth()
+const router = useRouter()
 const question = ref("")
 const loading = ref(false)
 const restoring = ref(true)
@@ -37,6 +44,12 @@ async function restoreChat() {
     const current = await getCurrentChat()
     if (version !== stateVersion) return
     messages.value = current.messages
+    if (!auth.isAdmin.value) {
+      const ids = current.messages.flatMap((message) => message.id === null ? [] : [message.id])
+      const links = await getWorkOrderLinks(ids)
+      if (version !== stateVersion) return
+      workOrderLinks.value = Object.fromEntries(links.map((item) => [item.qa_record_id, item.work_order_id]))
+    }
   } catch (error) {
     if (version !== stateVersion) return
     errorMessage.value = getApiErrorMessage(error, "当前会话加载失败")
@@ -60,6 +73,9 @@ async function submitQuestion() {
     const message = await sendChatMessage(normalized, startNew.value)
     if (version !== stateVersion) return
     messages.value.push(message)
+    if (message.persisted === true && message.id !== null && !auth.isAdmin.value) {
+      workOrderLinks.value[message.id] = null
+    }
     question.value = ""
     startNew.value = false
     locked.value = message.conversation_locked
@@ -79,6 +95,7 @@ async function newChat() {
     await startNewChat()
     if (version !== stateVersion) return
     messages.value = []
+    workOrderLinks.value = {}
     question.value = ""
     errorMessage.value = ""
     startNew.value = true
@@ -101,6 +118,12 @@ async function setFeedback(message: ChatMessage, feedback: Feedback) {
 
 function fillQuestion(value: string) {
   question.value = value
+}
+
+function openWorkOrder(message: ChatMessage) {
+  if (message.id === null || !hasKnownWorkOrderLink(workOrderLinks.value, message.id)) return
+  const orderId = workOrderLinks.value[message.id]
+  router.push(orderId ? `/work-orders/${orderId}` : `/work-orders/new/${message.id}`)
 }
 
 onMounted(restoreChat)
@@ -152,6 +175,12 @@ onMounted(restoreChat)
                 @click="setFeedback(message, 'unhelpful')"
               >无帮助</el-button>
             </div>
+            <el-button
+              v-if="!auth.isAdmin.value && message.persisted === true && message.id !== null && hasKnownWorkOrderLink(workOrderLinks, message.id)"
+              link
+              type="primary"
+              @click="openWorkOrder(message)"
+            >{{ workOrderLinks[message.id] ? "查看工单" : "转为工单" }}</el-button>
             <el-alert
               v-if="message.persisted === false"
               title="本次回答未保存到历史，刷新后将丢失"

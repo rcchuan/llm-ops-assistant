@@ -44,3 +44,23 @@ class ChatRecordNotFoundError(Exception):
 
 class InvalidChatQuestionError(Exception):
     pass
+
+
+class WorkOrderNotFoundError(Exception):
+    pass
+
+
+class WorkOrderForbiddenError(Exception):
+    pass
+
+
+class WorkOrderAlreadyExistsError(Exception):
+    pass
+
+
+class WorkOrderConflictError(Exception):
+    pass
+
+
+class WorkOrderPersistenceError(Exception):
+    pass
