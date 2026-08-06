@@ -8,6 +8,9 @@ import ChatView from "../views/ChatView.vue"
 import HomeView from "../views/HomeView.vue"
 import LoginView from "../views/LoginView.vue"
 import UserManagementView from "../views/admin/UserManagementView.vue"
+import WorkOrderCreateView from "../views/work-orders/WorkOrderCreateView.vue"
+import WorkOrderDetailView from "../views/work-orders/WorkOrderDetailView.vue"
+import WorkOrderListView from "../views/work-orders/WorkOrderListView.vue"
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,6 +24,13 @@ const router = createRouter({
         { path: "", component: HomeView },
         { path: "chat", component: ChatView },
         { path: "chat/history", component: ChatHistoryView },
+        { path: "work-orders", component: WorkOrderListView },
+        {
+          path: "work-orders/new/:qaRecordId",
+          component: WorkOrderCreateView,
+          meta: { operatorOnly: true },
+        },
+        { path: "work-orders/:id", component: WorkOrderDetailView },
         { path: "change-password", component: ChangePasswordView },
         {
           path: "admin/users",
@@ -46,6 +56,7 @@ router.beforeEach(async (to) => {
     return "/change-password"
   }
   if (to.meta.adminOnly && !auth.isAdmin.value) return "/"
+  if (to.meta.operatorOnly && auth.isAdmin.value) return "/work-orders"
   return true
 })
 

@@ -1,6 +1,6 @@
 # FastAPI 后端
 
-阶段 3 后端在认证与用户管理基础上，提供 Dify 智能问答、最近会话恢复、个人历史和反馈。
+阶段 4 后端在智能问答基础上增加问答转工单、最小状态机、状态日志、分页和按角色数据隔离。
 
 ## 后端架构
 
@@ -104,6 +104,10 @@ INITIAL_ADMIN_ENABLED=false
 - `PUT /api/v1/chat/messages/{id}/feedback`：保存或覆盖本地反馈。
 
 所有接口要求已登录且完成强制改密。operator 和 admin 都只能访问自己的问答数据。Dify 成功但数据库保存失败时仍返回回答，并标记 `persisted=false`、锁定当前对话；外部错误、Dify ID 和原始响应不会暴露给前端。
+
+## 工单 API
+
+工单接口、状态、权限和数据可见性见 [`docs/work-order-flow.md`](../docs/work-order-flow.md)。正式表为 `formal_work_orders` 和 `formal_work_order_logs`；旧原型 `work_orders` 保持不变。真实 MySQL 已迁移到 `20260805_04 (head)`；后续新迁移仍须先生成并审查 offline SQL，再取得明确授权执行。
 
 ## 认证规则
 

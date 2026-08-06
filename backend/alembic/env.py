@@ -4,8 +4,9 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
+from app.db.alembic import include_database_object
 from app.models.base import Base
-from app.models import conversation, qa_record, user  # noqa: F401
+from app.models import conversation, qa_record, user, work_order  # noqa: F401
 
 
 config = context.config
@@ -27,6 +28,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_database_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -43,6 +45,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            include_object=include_database_object,
         )
         with context.begin_transaction():
             context.run_migrations()
