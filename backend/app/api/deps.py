@@ -14,6 +14,8 @@ from app.core.exceptions import (
 )
 from app.db.session import get_db
 from app.integrations.dify.client import DifyClient
+from app.integrations.dify.dataset_client import DifyDatasetClient
+from app.integrations.dify.dataset_exceptions import DifyDatasetConfigurationError
 from app.integrations.dify.exceptions import DifyConfigurationError
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -25,6 +27,26 @@ from app.services.auth_service import (
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_dify_dataset_client() -> Iterator[DifyDatasetClient]:
+    settings = get_settings()
+    try:
+        client = DifyDatasetClient(
+            base_url=settings.dify_base_url,
+            api_key=settings.dify_dataset_api_key.get_secret_value(),
+            dataset_id=settings.dify_dataset_id,
+            timeout_seconds=settings.dify_timeout_seconds,
+        )
+    except DifyDatasetConfigurationError:
+        raise HTTPException(
+            status_code=503,
+            detail="知识同步服务未配置或认证失败",
+        ) from None
+    try:
+        yield client
+    finally:
+        client.close()
 
 
 def get_dify_client() -> Iterator[DifyClient]:

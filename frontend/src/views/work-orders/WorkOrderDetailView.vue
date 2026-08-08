@@ -23,7 +23,7 @@ const order = ref<WorkOrder | null>(null)
 const loading = ref(true)
 const submitting = ref(false)
 const errorMessage = ref("")
-const processing = reactive({ notes: "", solution: "" })
+const processing = reactive({ solution: "" })
 const unresolvedNote = ref("")
 const statusLabels = { pending: "待处理", processing: "处理中", resolved: "已解决", closed: "已关闭" }
 
@@ -32,7 +32,6 @@ const displayId = computed(() => order.value ? `WO-${order.value.id.toString().p
 
 function sync(result: WorkOrder) {
   order.value = result
-  processing.notes = result.processing_notes ?? ""
   processing.solution = result.solution ?? ""
 }
 
@@ -89,16 +88,14 @@ onMounted(load)
         </div>
 
         <el-form v-if="auth.isAdmin.value && order.status === 'processing'" label-position="top" class="processing-form">
-          <el-form-item label="处理过程"><el-input v-model="processing.notes" type="textarea" :rows="6" maxlength="8000" show-word-limit /></el-form-item>
           <el-form-item label="解决方案"><el-input v-model="processing.solution" type="textarea" :rows="6" maxlength="8000" show-word-limit /></el-form-item>
           <div class="action-row">
-            <el-button :loading="submitting" @click="act(() => saveProcessingContent(orderId, processing.notes, processing.solution), '处理内容已保存')">保存</el-button>
-            <el-button type="primary" :loading="submitting" :disabled="!processing.solution.trim()" @click="act(() => resolveWorkOrder(orderId, processing.notes, processing.solution), '已标记为解决')">标记已解决</el-button>
+            <el-button :loading="submitting" @click="act(() => saveProcessingContent(orderId, processing.solution), '解决方案已保存')">保存</el-button>
+            <el-button type="primary" :loading="submitting" :disabled="!processing.solution.trim()" @click="act(() => resolveWorkOrder(orderId, processing.solution), '已标记为解决')">标记已解决</el-button>
           </div>
         </el-form>
 
-        <dl v-if="order.processing_notes || order.solution" class="detail-grid result-block">
-          <div v-if="order.processing_notes"><dt>处理过程</dt><dd class="pre-line">{{ order.processing_notes }}</dd></div>
+        <dl v-if="order.solution" class="detail-grid result-block">
           <div v-if="order.solution"><dt>解决方案</dt><dd class="pre-line">{{ order.solution }}</dd></div>
         </dl>
 

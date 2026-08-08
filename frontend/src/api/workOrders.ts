@@ -31,18 +31,16 @@ export async function startWorkOrder(id: number): Promise<WorkOrder> {
 
 export async function saveProcessingContent(
   id: number,
-  processing_notes: string,
   solution: string,
 ): Promise<WorkOrder> {
-  return (await http.put<WorkOrder>(`/work-orders/${id}/processing-content`, { processing_notes, solution })).data
+  return (await http.put<WorkOrder>(`/work-orders/${id}/processing-content`, { solution })).data
 }
 
 export async function resolveWorkOrder(
   id: number,
-  processing_notes: string,
   solution: string,
 ): Promise<WorkOrder> {
-  return (await http.post<WorkOrder>(`/work-orders/${id}/resolve`, { processing_notes, solution })).data
+  return (await http.post<WorkOrder>(`/work-orders/${id}/resolve`, { solution })).data
 }
 
 export async function confirmWorkOrder(id: number): Promise<WorkOrder> {

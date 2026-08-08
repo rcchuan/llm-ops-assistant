@@ -3,6 +3,11 @@ from pathlib import Path
 from sqlalchemy import Enum as SqlEnum
 
 from app.models.work_order import WorkOrder, WorkOrderLog, WorkOrderStatus
+from app.schemas.work_order import (
+    WorkOrderProcessingContent,
+    WorkOrderRead,
+    WorkOrderResolve,
+)
 
 
 def test_work_order_tables_match_stage_four_contract() -> None:
@@ -23,7 +28,6 @@ def test_work_order_tables_match_stage_four_contract() -> None:
         "symptom",
         "attempted_steps",
         "additional_notes",
-        "processing_notes",
         "solution",
         "unresolved_note",
         "status",
@@ -39,6 +43,12 @@ def test_work_order_tables_match_stage_four_contract() -> None:
     assert ("user_id", "created_at") in work_order_indexes
     assert ("created_at",) in work_order_indexes
     assert ("work_order_id", "created_at") in log_indexes
+
+
+def test_work_order_schemas_only_expose_solution() -> None:
+    assert "processing_notes" not in WorkOrderRead.model_fields
+    assert set(WorkOrderProcessingContent.model_fields) == {"solution"}
+    assert set(WorkOrderResolve.model_fields) == {"solution"}
 
 
 def test_stage_four_migration_only_owns_work_order_tables() -> None:

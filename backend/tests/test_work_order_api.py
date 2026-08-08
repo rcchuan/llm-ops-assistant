@@ -1,8 +1,10 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.conversation import Conversation
+from app.models.knowledge_entry import KnowledgeEntry, KnowledgeEntryStatus
 from app.models.qa_record import QARecord
 from app.models.work_order import WorkOrder, WorkOrderLog, WorkOrderStatus
 from app.models.user import UserRole
@@ -272,8 +274,8 @@ def test_admin_saves_processing_content_without_log(
     ).status_code == 200
 
     for payload in (
-        {"processing_notes": "  检查网络  ", "solution": None},
-        {"processing_notes": "再次检查", "solution": "  临时方案  "},
+        {"solution": None},
+        {"solution": "  临时方案  "},
     ):
         response = client.put(
             f"/api/v1/work-orders/{order_id}/processing-content",
@@ -282,7 +284,6 @@ def test_admin_saves_processing_content_without_log(
         )
         assert response.status_code == 200
         assert response.json()["status"] == "processing"
-    assert response.json()["processing_notes"] == "再次检查"
     assert response.json()["solution"] == "临时方案"
     assert len(
         db_session.scalars(
@@ -308,12 +309,11 @@ def test_resolve_requires_solution_and_writes_status_log(
     response = client.post(
         f"/api/v1/work-orders/{order_id}/resolve",
         headers=admin_headers,
-        json={"processing_notes": "  已定位连接池  ", "solution": "  调整连接池配置  "},
+        json={"solution": "  调整连接池配置  "},
     )
 
     assert response.status_code == 200
     assert response.json()["status"] == "resolved"
-    assert response.json()["processing_notes"] == "已定位连接池"
     assert response.json()["solution"] == "调整连接池配置"
     logs = db_session.scalars(
         select(WorkOrderLog)
@@ -350,6 +350,13 @@ def test_owner_confirms_resolved_order_and_closed_is_read_only(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "closed"
+    entry = db_session.scalar(
+        select(KnowledgeEntry).where(KnowledgeEntry.work_order_id == order_id)
+    )
+    assert entry is not None
+    assert entry.status == KnowledgeEntryStatus.PENDING
+    assert entry.title == "问题"
+    assert entry.content == "## 故障现象\n服务异常\n\n## 解决方案\n修复配置"
     assert client.post(
         f"/api/v1/work-orders/{order_id}/confirm", headers=owner_headers
     ).status_code == 409
@@ -424,7 +431,7 @@ def test_illegal_state_and_role_matrix_is_rejected(
     assert client.put(
         f"/api/v1/work-orders/{order_id}/processing-content",
         headers=admin_headers,
-        json={"processing_notes": "越级"},
+        json={"solution": "越级"},
     ).status_code == 409
     assert client.post(
         f"/api/v1/work-orders/{order_id}/resolve",
@@ -439,7 +446,7 @@ def test_illegal_state_and_role_matrix_is_rejected(
     assert client.put(
         f"/api/v1/work-orders/{order_id}/processing-content",
         headers=owner_headers,
-        json={"processing_notes": "角色错误"},
+        json={"solution": "角色错误"},
     ).status_code == 403
 
 
@@ -454,7 +461,7 @@ def test_processing_draft_visibility_tracks_status(
     client.put(
         f"/api/v1/work-orders/{order_id}/processing-content",
         headers=admin_headers,
-        json={"processing_notes": "内部排查", "solution": "草稿方案"},
+        json={"solution": "草稿方案"},
     )
 
     owner_processing = client.get(
@@ -463,20 +470,17 @@ def test_processing_draft_visibility_tracks_status(
     admin_processing = client.get(
         f"/api/v1/work-orders/{order_id}", headers=admin_headers
     ).json()
-    assert owner_processing["processing_notes"] is None
     assert owner_processing["solution"] is None
-    assert admin_processing["processing_notes"] == "内部排查"
     assert admin_processing["solution"] == "草稿方案"
 
     client.post(
         f"/api/v1/work-orders/{order_id}/resolve",
         headers=admin_headers,
-        json={"processing_notes": "完成排查", "solution": "正式方案"},
+        json={"solution": "正式方案"},
     )
     owner_resolved = client.get(
         f"/api/v1/work-orders/{order_id}", headers=owner_headers
     ).json()
-    assert owner_resolved["processing_notes"] == "完成排查"
     assert owner_resolved["solution"] == "正式方案"
 
     client.post(
@@ -487,5 +491,99 @@ def test_processing_draft_visibility_tracks_status(
     owner_reopened = client.get(
         f"/api/v1/work-orders/{order_id}", headers=owner_headers
     ).json()
-    assert owner_reopened["processing_notes"] is None
     assert owner_reopened["solution"] is None
+
+
+def test_processing_endpoints_reject_removed_processing_notes(
+    client: TestClient, add_user, db_session: Session
+) -> None:
+    owner = add_user("Operator01")
+    admin = add_user("Admin01", role=UserRole.ADMIN)
+    order_id, _ = create_order(client, db_session, owner)
+    admin_headers = auth(client, admin.username)
+    client.post(f"/api/v1/work-orders/{order_id}/start", headers=admin_headers)
+
+    assert client.put(
+        f"/api/v1/work-orders/{order_id}/processing-content",
+        headers=admin_headers,
+        json={"processing_notes": "旧字段", "solution": "方案"},
+    ).status_code == 422
+    assert client.post(
+        f"/api/v1/work-orders/{order_id}/resolve",
+        headers=admin_headers,
+        json={"processing_notes": "旧字段", "solution": "方案"},
+    ).status_code == 422
+
+
+def test_confirm_rolls_back_closed_log_and_candidate_when_commit_fails(
+    client: TestClient, add_user, db_session: Session, monkeypatch
+) -> None:
+    owner = add_user("Operator01")
+    admin = add_user("Admin01", role=UserRole.ADMIN)
+    order_id, owner_headers = create_order(client, db_session, owner)
+    admin_headers = auth(client, admin.username)
+    client.post(f"/api/v1/work-orders/{order_id}/start", headers=admin_headers)
+    client.post(
+        f"/api/v1/work-orders/{order_id}/resolve",
+        headers=admin_headers,
+        json={"solution": "修复配置"},
+    )
+    original_commit = db_session.commit
+    monkeypatch.setattr(
+        db_session,
+        "commit",
+        lambda: (_ for _ in ()).throw(SQLAlchemyError("commit failed")),
+    )
+
+    response = client.post(
+        f"/api/v1/work-orders/{order_id}/confirm", headers=owner_headers
+    )
+    monkeypatch.setattr(db_session, "commit", original_commit)
+    db_session.expire_all()
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "确认失败，请稍后重试"
+    assert db_session.get(WorkOrder, order_id).status == WorkOrderStatus.RESOLVED
+    assert db_session.scalar(
+        select(KnowledgeEntry).where(KnowledgeEntry.work_order_id == order_id)
+    ) is None
+    logs = db_session.scalars(
+        select(WorkOrderLog).where(WorkOrderLog.work_order_id == order_id)
+    ).all()
+    assert all(log.to_status != WorkOrderStatus.CLOSED for log in logs)
+
+
+def test_confirm_rejects_existing_candidate_without_creating_duplicate(
+    client: TestClient, add_user, db_session: Session
+) -> None:
+    owner = add_user("Operator01")
+    admin = add_user("Admin01", role=UserRole.ADMIN)
+    order_id, owner_headers = create_order(client, db_session, owner)
+    admin_headers = auth(client, admin.username)
+    client.post(f"/api/v1/work-orders/{order_id}/start", headers=admin_headers)
+    client.post(
+        f"/api/v1/work-orders/{order_id}/resolve",
+        headers=admin_headers,
+        json={"solution": "修复配置"},
+    )
+    db_session.add(
+        KnowledgeEntry(
+            work_order_id=order_id,
+            title="已有候选",
+            content="正文",
+            status=KnowledgeEntryStatus.PENDING,
+        )
+    )
+    db_session.commit()
+
+    response = client.post(
+        f"/api/v1/work-orders/{order_id}/confirm", headers=owner_headers
+    )
+
+    assert response.status_code == 409
+    assert db_session.get(WorkOrder, order_id).status == WorkOrderStatus.RESOLVED
+    assert len(
+        db_session.scalars(
+            select(KnowledgeEntry).where(KnowledgeEntry.work_order_id == order_id)
+        ).all()
+    ) == 1

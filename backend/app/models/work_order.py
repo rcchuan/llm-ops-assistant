@@ -45,9 +45,6 @@ class WorkOrder(Base):
     symptom: Mapped[str] = mapped_column(Text, nullable=False)
     attempted_steps: Mapped[str | None] = mapped_column(Text, nullable=True)
     additional_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    processing_notes: Mapped[str | None] = mapped_column(
-        Text().with_variant(MEDIUMTEXT(), "mysql"), nullable=True
-    )
     solution: Mapped[str | None] = mapped_column(
         Text().with_variant(MEDIUMTEXT(), "mysql"), nullable=True
     )
