@@ -22,7 +22,6 @@ export interface WorkOrder {
   symptom: string
   attempted_steps: string | null
   additional_notes: string | null
-  processing_notes: string | null
   solution: string | null
   unresolved_note: string | null
   status: WorkOrderStatus

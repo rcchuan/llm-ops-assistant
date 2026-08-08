@@ -59,7 +59,6 @@ def to_read(view: WorkOrderView) -> WorkOrderRead:
         symptom=order.symptom,
         attempted_steps=order.attempted_steps,
         additional_notes=order.additional_notes,
-        processing_notes=view.processing_notes,
         solution=view.solution,
         unresolved_note=order.unresolved_note,
         status=order.status,
@@ -193,7 +192,7 @@ def confirm_work_order(
     except WorkOrderConflictError:
         raise HTTPException(status_code=409, detail="当前状态不能确认关闭") from None
     except WorkOrderPersistenceError:
-        raise HTTPException(status_code=503, detail="工单保存失败，请稍后重试") from None
+        raise HTTPException(status_code=503, detail="确认失败，请稍后重试") from None
     return to_read(service.present(user, bundle))
 
 

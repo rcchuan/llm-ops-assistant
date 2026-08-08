@@ -9,12 +9,17 @@ def test_dify_settings_normalize_url_and_hide_key() -> None:
         app_env="test",
         dify_base_url="https://api.dify.ai/v1/",
         dify_app_api_key="test-secret-dify-key",
+        dify_dataset_api_key="test-secret-dataset-key",
+        dify_dataset_id="dataset-1",
         dify_timeout_seconds=60,
     )
 
     assert settings.dify_base_url == "https://api.dify.ai/v1"
     assert settings.dify_app_api_key.get_secret_value() == "test-secret-dify-key"
+    assert settings.dify_dataset_api_key.get_secret_value() == "test-secret-dataset-key"
+    assert settings.dify_dataset_id == "dataset-1"
     assert "test-secret-dify-key" not in repr(settings)
+    assert "test-secret-dataset-key" not in repr(settings)
     assert settings.dify_timeout_seconds == 60
 
 

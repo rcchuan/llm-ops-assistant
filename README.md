@@ -2,7 +2,7 @@
 
 本科毕业设计项目，目标是建立“智能问答 → 未解决问题转工单 → 管理员处理 → 解决方案沉淀知识 → Dify 知识库复用”的业务闭环。
 
-阶段 4 已加入问答转工单、管理员处理、用户确认关闭或退回处理中的最小状态流转；真实 MySQL 已迁移到 `20260805_04 (head)`，真实 API 和桌面浏览器主流程已验收。
+阶段 4 已加入问答转工单、管理员处理、用户确认关闭或退回处理中的最小状态流转。阶段 5 增加关闭时生成候选知识、管理员复核和首次同步 Dify Dataset；真实 MySQL 已迁移到 `20260807_05 (head)`，真实关闭、浏览器审核、Dataset 同步与召回均已验收，Chatflow 检索复用已验证，候选知识可被真实召回并进入回答，来源正确展示。
 
 ## 技术栈
 
@@ -32,13 +32,13 @@ deployment/  后续部署说明
 4. 临时启用初始管理员引导并启动 FastAPI；创建成功后关闭开关并清空初始密码配置。
 5. 启动 Vue 前端并使用管理员账号完成首次改密。
 
-详细命令见 [backend/README.md](backend/README.md) 和 [frontend/README.md](frontend/README.md)。认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)，智能问答契约见 [docs/intelligent-chat.md](docs/intelligent-chat.md)，工单状态和权限见 [docs/work-order-flow.md](docs/work-order-flow.md)。
+详细命令见 [backend/README.md](backend/README.md) 和 [frontend/README.md](frontend/README.md)。认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)，智能问答契约见 [docs/intelligent-chat.md](docs/intelligent-chat.md)，工单状态和权限见 [docs/work-order-flow.md](docs/work-order-flow.md)，候选知识与 Dify Dataset 契约见 [docs/knowledge-deposition.md](docs/knowledge-deposition.md)。
 
 ## 当前范围
 
-已实现：Flask 原型隔离、FastAPI/Vue 工程、MySQL 健康检查、认证与用户管理、Dify blocking 问答、单页连续对话、最近会话恢复、最近 50 条个人历史、本地反馈，以及阶段 4 工单代码、真实迁移和验收。
+已实现：Flask 原型隔离、FastAPI/Vue 工程、MySQL 健康检查、认证与用户管理、Dify blocking 问答、单页连续对话、最近会话恢复、最近 50 条个人历史、本地反馈、阶段 4 工单，以及阶段 5 候选知识代码和自动化测试。
 
-尚未完成：知识库管理、多会话管理、流式输出、统计看板、Refresh Token、注册和密码找回。
+尚未完成：多会话管理、流式输出、统计看板、Refresh Token、注册和密码找回。通用知识库管理不属于阶段 5 范围。
 
 ## 安全边界
 

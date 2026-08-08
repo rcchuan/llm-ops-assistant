@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import WorkOrderAlreadyExistsError, WorkOrderPersistenceError
+from app.models.knowledge_entry import KnowledgeEntry
 from app.models.qa_record import QARecord
 from app.models.user import User
 from app.models.work_order import WorkOrder, WorkOrderLog, WorkOrderStatus
@@ -96,6 +97,17 @@ class WorkOrderRepository:
             self.session.rollback()
             raise WorkOrderPersistenceError from None
 
+    def get_knowledge_entry(self, work_order_id: int) -> KnowledgeEntry | None:
+        try:
+            return self.session.scalar(
+                select(KnowledgeEntry).where(
+                    KnowledgeEntry.work_order_id == work_order_id
+                )
+            )
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise WorkOrderPersistenceError from None
+
     def create(self, order: WorkOrder, log: WorkOrderLog) -> WorkOrder:
         try:
             self.session.add(order)
@@ -130,6 +142,29 @@ class WorkOrderRepository:
         )
         try:
             self.session.add(log)
+            self.session.commit()
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise WorkOrderPersistenceError from None
+        return order
+
+    def close_with_knowledge(
+        self,
+        order: WorkOrder,
+        entry: KnowledgeEntry,
+        *,
+        from_status: WorkOrderStatus,
+        operator_user_id: int,
+    ) -> WorkOrder:
+        log = WorkOrderLog(
+            work_order_id=order.id,
+            from_status=from_status,
+            to_status=order.status,
+            operator_user_id=operator_user_id,
+        )
+        try:
+            self.session.add(log)
+            self.session.add(entry)
             self.session.commit()
         except SQLAlchemyError:
             self.session.rollback()

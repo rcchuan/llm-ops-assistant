@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { ChatDotRound, Clock, Expand, Fold, HomeFilled, Key, Tickets, UserFilled } from "@element-plus/icons-vue"
+import { ChatDotRound, Clock, Collection, Expand, Fold, HomeFilled, Key, Tickets, UserFilled } from "@element-plus/icons-vue"
 
 import { useAuth } from "../stores/auth"
 
@@ -19,7 +19,10 @@ const menuItems = computed(() => {
   items.push({ path: "/chat", label: "智能问答", icon: ChatDotRound })
   items.push({ path: "/chat/history", label: "问答历史", icon: Clock })
   items.push({ path: "/work-orders", label: auth.isAdmin.value ? "工单管理" : "我的工单", icon: Tickets })
-  if (auth.isAdmin.value) items.push({ path: "/admin/users", label: "用户管理", icon: UserFilled })
+  if (auth.isAdmin.value) {
+    items.push({ path: "/admin/knowledge-entries", label: "候选知识", icon: Collection })
+    items.push({ path: "/admin/users", label: "用户管理", icon: UserFilled })
+  }
   items.push({ path: "/change-password", label: "修改密码", icon: Key })
   return items
 })

@@ -38,6 +38,8 @@ class Settings(BaseSettings):
 
     dify_base_url: str = "https://api.dify.ai/v1"
     dify_app_api_key: SecretStr = SecretStr("")
+    dify_dataset_api_key: SecretStr = SecretStr("")
+    dify_dataset_id: str = ""
     dify_timeout_seconds: int = 60
 
     @field_validator("dify_base_url")

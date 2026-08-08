@@ -57,7 +57,6 @@ class WorkOrderRead(BaseModel):
     symptom: str
     attempted_steps: str | None
     additional_notes: str | None
-    processing_notes: str | None
     solution: str | None
     unresolved_note: str | None
     status: WorkOrderStatus
@@ -103,10 +102,9 @@ class WorkOrderLinksResponse(BaseModel):
 class WorkOrderProcessingContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    processing_notes: str | None = Field(default=None, max_length=8000)
     solution: str | None = Field(default=None, max_length=8000)
 
-    @field_validator("processing_notes", "solution", mode="before")
+    @field_validator("solution", mode="before")
     @classmethod
     def normalize_fields(cls, value: str | None) -> str | None:
         return normalize_optional(value)
@@ -115,13 +113,7 @@ class WorkOrderProcessingContent(BaseModel):
 class WorkOrderResolve(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    processing_notes: str | None = Field(default=None, max_length=8000)
     solution: str = Field(max_length=8000)
-
-    @field_validator("processing_notes", mode="before")
-    @classmethod
-    def normalize_notes(cls, value: str | None) -> str | None:
-        return normalize_optional(value)
 
     @field_validator("solution", mode="before")
     @classmethod

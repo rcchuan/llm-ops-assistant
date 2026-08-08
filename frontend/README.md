@@ -1,6 +1,6 @@
 # Vue 3 前端
 
-阶段 4 前端在智能问答和历史页面增加批量转单入口，并提供工单创建、列表、管理员处理和用户结果确认页面。界面继续使用现有 Element Plus，不引入第二套 UI 框架。
+阶段 5 前端在工单页面基础上增加 admin-only 的候选知识单页。界面继续使用现有 Element Plus，不引入第二套 UI 框架。
 
 ## 配置与启动
 
@@ -45,6 +45,15 @@ npm run build
 - `/work-orders/:id`：管理员处理或普通用户确认结果。
 
 管理员问答不显示转单入口；普通用户在处理阶段看不到管理员草稿。页面不提供搜索、筛选、删除、归档或日志时间线。
+
+## 候选知识页面
+
+- `/admin/knowledge-entries`：管理员查看、编辑并首次同步工单候选知识；普通用户无菜单且路由会被拦截。
+- `pending` 和 `sync_failed` 可编辑标题及 Markdown 纯文本正文；`synced` 永久只读。
+- 同步失败后只对账一次本地状态并保留原错误；timeout 提示先按 `[KE-{id}]` 到 Dify 控制台核对。
+- 页面不解析 Markdown，不使用 `v-html`，不提供上传、搜索、筛选、删除、分类、版本、Dify 跳转或索引状态。
+
+完整边界和当前验收状态见 [`docs/knowledge-deposition.md`](../docs/knowledge-deposition.md)。
 
 ## Token 存储风险
 

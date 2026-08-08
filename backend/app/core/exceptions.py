@@ -64,3 +64,19 @@ class WorkOrderConflictError(Exception):
 
 class WorkOrderPersistenceError(Exception):
     pass
+
+
+class KnowledgeEntryNotFoundError(Exception):
+    pass
+
+
+class KnowledgeEntryForbiddenError(Exception):
+    pass
+
+
+class KnowledgeEntryConflictError(Exception):
+    pass
+
+
+class KnowledgeEntryPersistenceError(Exception):
+    pass

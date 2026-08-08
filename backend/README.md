@@ -1,6 +1,6 @@
 # FastAPI 后端
 
-阶段 4 后端在智能问答基础上增加问答转工单、最小状态机、状态日志、分页和按角色数据隔离。
+阶段 5 后端在工单闭环基础上增加关闭事务内候选生成、管理员复核 API 和 Dify Dataset Integration。初始资料仍在 Dify 控制台导入，后端只处理工单产生的增量知识。
 
 ## 后端架构
 
@@ -30,6 +30,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=120
 
 DIFY_BASE_URL=https://api.dify.ai/v1
 DIFY_APP_API_KEY=<Dify App API Key>
+DIFY_DATASET_API_KEY=<Dify Dataset API Key>
+DIFY_DATASET_ID=<当前 Chatflow 使用的 Dataset ID>
 DIFY_TIMEOUT_SECONDS=60
 ```
 
@@ -107,7 +109,13 @@ INITIAL_ADMIN_ENABLED=false
 
 ## 工单 API
 
-工单接口、状态、权限和数据可见性见 [`docs/work-order-flow.md`](../docs/work-order-flow.md)。正式表为 `formal_work_orders` 和 `formal_work_order_logs`；旧原型 `work_orders` 保持不变。真实 MySQL 已迁移到 `20260805_04 (head)`；后续新迁移仍须先生成并审查 offline SQL，再取得明确授权执行。
+工单接口、状态、权限和数据可见性见 [`docs/work-order-flow.md`](../docs/work-order-flow.md)。正式表为 `formal_work_orders` 和 `formal_work_order_logs`；旧原型 `work_orders` 保持不变。真实 MySQL 已迁移到 `20260807_05 (head)`；后续新迁移仍须先生成并审查 offline SQL，再取得明确授权执行。
+
+## 候选知识 API
+
+阶段 5 增加 admin-only 的 `GET /api/v1/knowledge-entries`、`PUT /api/v1/knowledge-entries/{id}` 和 `POST /api/v1/knowledge-entries/{id}/sync`。关闭工单、关闭日志和唯一候选在同一事务保存；`synced` 候选永久只读。Dataset client 使用独立 Key，timeout 或网络异常不会自动重试，管理员必须先按 `[KE-{id}]` 在 Dify 控制台核对。
+
+数据结构、三状态、真实 Dataset API 契约和当前验收状态见 [`docs/knowledge-deposition.md`](../docs/knowledge-deposition.md)。revision `20260807_05` 已在真实 MySQL 一次执行并完成结构核验；旧原型 `work_orders` 仍为 10 行。
 
 ## 认证规则
 

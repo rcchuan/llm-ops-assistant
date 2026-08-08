@@ -10,6 +10,7 @@ from app.models.qa_record import QARecord
 from app.models.user import User, UserRole
 from app.models.work_order import WorkOrder, WorkOrderLog, WorkOrderStatus
 from app.repositories.work_order_repository import WorkOrderBundle, WorkOrderRepository
+from app.services.knowledge_service import build_knowledge_entry
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,7 +18,6 @@ class WorkOrderView:
     order: WorkOrder
     record: QARecord
     creator: User | None
-    processing_notes: str | None
     solution: str | None
 
 
@@ -26,7 +26,7 @@ class WorkOrderService:
         self.repository = repository
 
     def present(self, user: User, bundle: WorkOrderBundle) -> WorkOrderView:
-        can_view_processing = user.role == UserRole.ADMIN or bundle.order.status in {
+        can_view_solution = user.role == UserRole.ADMIN or bundle.order.status in {
             WorkOrderStatus.RESOLVED,
             WorkOrderStatus.CLOSED,
         }
@@ -34,10 +34,7 @@ class WorkOrderService:
             order=bundle.order,
             record=bundle.record,
             creator=bundle.creator if user.role == UserRole.ADMIN else None,
-            processing_notes=(
-                bundle.order.processing_notes if can_view_processing else None
-            ),
-            solution=bundle.order.solution if can_view_processing else None,
+            solution=bundle.order.solution if can_view_solution else None,
         )
 
     def create(
@@ -114,7 +111,6 @@ class WorkOrderService:
         user: User,
         order_id: int,
         *,
-        processing_notes: str | None,
         solution: str | None,
     ) -> WorkOrderBundle:
         if user.role != UserRole.ADMIN:
@@ -124,7 +120,6 @@ class WorkOrderService:
             raise WorkOrderNotFoundError
         if bundle.order.status != WorkOrderStatus.PROCESSING:
             raise WorkOrderConflictError
-        bundle.order.processing_notes = processing_notes
         bundle.order.solution = solution
         self.repository.save_content(bundle.order)
         return bundle
@@ -134,7 +129,6 @@ class WorkOrderService:
         user: User,
         order_id: int,
         *,
-        processing_notes: str | None,
         solution: str,
     ) -> WorkOrderBundle:
         if user.role != UserRole.ADMIN:
@@ -145,7 +139,6 @@ class WorkOrderService:
         if bundle.order.status != WorkOrderStatus.PROCESSING or not solution.strip():
             raise WorkOrderConflictError
         previous = bundle.order.status
-        bundle.order.processing_notes = processing_notes
         bundle.order.solution = solution.strip()
         bundle.order.status = WorkOrderStatus.RESOLVED
         self.repository.save_transition(
@@ -161,12 +154,18 @@ class WorkOrderService:
         bundle = self.repository.get_bundle(order_id, for_update=True)
         if bundle is None or bundle.order.user_id != user.id:
             raise WorkOrderNotFoundError
-        if bundle.order.status != WorkOrderStatus.RESOLVED:
+        if (
+            bundle.order.status != WorkOrderStatus.RESOLVED
+            or not (bundle.order.solution or "").strip()
+        ):
+            raise WorkOrderConflictError
+        if self.repository.get_knowledge_entry(bundle.order.id) is not None:
             raise WorkOrderConflictError
         previous = bundle.order.status
         bundle.order.status = WorkOrderStatus.CLOSED
-        self.repository.save_transition(
+        self.repository.close_with_knowledge(
             bundle.order,
+            build_knowledge_entry(bundle.order, bundle.record),
             from_status=previous,
             operator_user_id=user.id,
         )

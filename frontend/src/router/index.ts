@@ -8,6 +8,7 @@ import ChatView from "../views/ChatView.vue"
 import HomeView from "../views/HomeView.vue"
 import LoginView from "../views/LoginView.vue"
 import UserManagementView from "../views/admin/UserManagementView.vue"
+import KnowledgeEntriesView from "../views/admin/KnowledgeEntriesView.vue"
 import WorkOrderCreateView from "../views/work-orders/WorkOrderCreateView.vue"
 import WorkOrderDetailView from "../views/work-orders/WorkOrderDetailView.vue"
 import WorkOrderListView from "../views/work-orders/WorkOrderListView.vue"
@@ -35,6 +36,11 @@ const router = createRouter({
         {
           path: "admin/users",
           component: UserManagementView,
+          meta: { adminOnly: true },
+        },
+        {
+          path: "admin/knowledge-entries",
+          component: KnowledgeEntriesView,
           meta: { adminOnly: true },
         },
       ],
