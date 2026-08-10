@@ -9,6 +9,7 @@ import HomeView from "../views/HomeView.vue"
 import LoginView from "../views/LoginView.vue"
 import UserManagementView from "../views/admin/UserManagementView.vue"
 import KnowledgeEntriesView from "../views/admin/KnowledgeEntriesView.vue"
+import StatisticsView from "../views/admin/StatisticsView.vue"
 import WorkOrderCreateView from "../views/work-orders/WorkOrderCreateView.vue"
 import WorkOrderDetailView from "../views/work-orders/WorkOrderDetailView.vue"
 import WorkOrderListView from "../views/work-orders/WorkOrderListView.vue"
@@ -33,6 +34,11 @@ const router = createRouter({
         },
         { path: "work-orders/:id", component: WorkOrderDetailView },
         { path: "change-password", component: ChangePasswordView },
+        {
+          path: "admin/statistics",
+          component: StatisticsView,
+          meta: { adminOnly: true },
+        },
         {
           path: "admin/users",
           component: UserManagementView,

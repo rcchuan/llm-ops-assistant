@@ -16,6 +16,9 @@ def test_health_database_up(monkeypatch) -> None:
         "service": "llm-ops-assistant-backend",
         "version": "0.3.0",
         "database": {"status": "up"},
+        "api": {"status": "up"},
+        "dify_app": {"status": "configured"},
+        "dify_dataset": {"status": "configured"},
     }
 
 
@@ -30,5 +33,8 @@ def test_health_database_down(monkeypatch) -> None:
         "service": "llm-ops-assistant-backend",
         "version": "0.3.0",
         "database": {"status": "down"},
+        "api": {"status": "up"},
+        "dify_app": {"status": "configured"},
+        "dify_dataset": {"status": "configured"},
     }
     assert "password" not in response.text.lower()
