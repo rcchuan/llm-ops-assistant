@@ -1,0 +1,15 @@
+[Unit]
+Description=LLM Ops Assistant
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/Dify_agent/backend
+ExecStartPre=/usr/bin/test -f /root/Dify_agent/backend/.env
+ExecStartPre=/usr/bin/test -f /root/Dify_agent/frontend/dist/index.html
+ExecStart=/root/Dify_agent/backend/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

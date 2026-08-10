@@ -69,6 +69,19 @@ python -m venv .venv
 
 健康检查：`GET http://127.0.0.1:8000/api/v1/health`
 
+## 阶段 7 生产页面托管
+
+执行前端生产构建后，仍使用原入口启动后端：
+
+```powershell
+cd ..\frontend
+npm run build
+cd ..\backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+当 `frontend/dist/index.html` 存在时，FastAPI 同时托管 Vue 页面和 `/assets`；不存在时只提供现有 API，非 API 路径返回 `404`。API 始终使用 `/api/v1` 前缀并优先于 SPA 页面回退。
+
 ## 初始管理员
 
 首次迁移后，在 `backend/.env` 临时填写：

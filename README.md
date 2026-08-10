@@ -2,7 +2,7 @@
 
 本科毕业设计项目，目标是建立“智能问答 → 未解决问题转工单 → 管理员处理 → 解决方案沉淀知识 → Dify 知识库复用”的业务闭环。
 
-阶段 4 已加入问答转工单、管理员处理、用户确认关闭或退回处理中的最小状态流转。阶段 5 增加关闭时生成候选知识、管理员复核和首次同步 Dify Dataset；真实 MySQL 已迁移到 `20260807_05 (head)`，真实关闭、浏览器审核、Dataset 同步与召回均已验收，Chatflow 检索复用已验证，候选知识可被真实召回并进入回答，来源正确展示。
+阶段 1～6 已完成工程化、认证权限、智能问答、工单闭环、知识沉淀、统计看板与健康检查。阶段 7 正在实施 Windows 生产构建与部署准备；智能问答仍是核心，工单只承接 AI 未解决问题，已确认的解决方案经管理员复核后首次同步到 Dify Dataset。
 
 ## 技术栈
 
@@ -32,13 +32,22 @@ deployment/  后续部署说明
 4. 临时启用初始管理员引导并启动 FastAPI；创建成功后关闭开关并清空初始密码配置。
 5. 启动 Vue 前端并使用管理员账号完成首次改密。
 
-详细命令见 [backend/README.md](backend/README.md) 和 [frontend/README.md](frontend/README.md)。认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)，智能问答契约见 [docs/intelligent-chat.md](docs/intelligent-chat.md)，工单状态和权限见 [docs/work-order-flow.md](docs/work-order-flow.md)，候选知识与 Dify Dataset 契约见 [docs/knowledge-deposition.md](docs/knowledge-deposition.md)。
+## 使用与验收入口
+
+- [后端本地开发](backend/README.md) / [前端本地开发](frontend/README.md)
+- [CentOS Stream 9 部署](deployment/README.md)
+- [测试与演示记录](docs/testing-and-demo.md)
+- [阶段 7 手动演示脚本](docs/stage-7-demo-script.md)
+- [阶段 7 截图索引](docs/screenshots/stage-7/README.md)
+- [环境版本清单](docs/environment-versions.md)
+
+认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)，智能问答契约见 [docs/intelligent-chat.md](docs/intelligent-chat.md)，工单状态和权限见 [docs/work-order-flow.md](docs/work-order-flow.md)，候选知识与 Dify Dataset 契约见 [docs/knowledge-deposition.md](docs/knowledge-deposition.md)。
 
 ## 当前范围
 
-已实现：Flask 原型隔离、FastAPI/Vue 工程、MySQL 健康检查、认证与用户管理、Dify blocking 问答、单页连续对话、最近会话恢复、最近 50 条个人历史、本地反馈、阶段 4 工单，以及阶段 5 候选知识代码和自动化测试。
+已实现：Flask 原型隔离、FastAPI/Vue 工程、认证与用户管理、Dify blocking 问答、问答历史、本地反馈、工单闭环、候选知识、统计看板和健康检查。阶段 7A 增加同源生产构建、FastAPI 条件静态托管和部署文档。
 
-尚未完成：多会话管理、流式输出、统计看板、Refresh Token、注册和密码找回。通用知识库管理不属于阶段 5 范围。
+尚未完成：CentOS Stream 9 真实部署验收（阶段 7B）。多会话管理、流式输出、Refresh Token、注册、密码找回和通用知识库管理不在当前范围。
 
 ## 安全边界
 
