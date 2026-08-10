@@ -989,6 +989,21 @@ code {
   padding: 8px 0 18px;
 }
 
+.statistics-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 18px 24px 0; }
+.stat-card { display: grid; gap: 8px; min-height: 118px; padding: 20px; background: #fff; border: 1px solid var(--ops-border); border-radius: 4px; }
+.stat-card span, .stat-card small { color: var(--ops-text-muted); font-size: 13px; }
+.stat-card strong { color: #1f3550; font-size: 30px; font-weight: 600; }
+.statistics-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 24px 0; }
+.statistics-panel { margin: 0; }
+.statistics-list { display: grid; gap: 0; margin: 0; padding: 8px 20px 14px; }
+.statistics-list > div { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #edf0f3; }
+.statistics-list > div:last-child { border-bottom: 0; }
+.statistics-list dt { color: var(--ops-text-muted); }
+.statistics-list dd { margin: 0; color: #263b50; font-weight: 600; }
+.loading-panel { margin-top: 18px; padding: 28px; color: var(--ops-text-muted); text-align: center; }
+.health-panel { margin-top: 18px; }
+.health-error { margin: 16px 20px 0; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

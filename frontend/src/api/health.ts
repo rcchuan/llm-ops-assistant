@@ -1,17 +1,11 @@
 import { http } from "./http"
+import { acceptsHealthStatus, type HealthResponse } from "../types/health"
 
-export interface HealthResponse {
-  status: "ok" | "degraded"
-  service: string
-  version: string
-  database: {
-    status: "up" | "down"
-  }
-}
+export type { HealthResponse } from "../types/health"
 
 export async function getHealth(): Promise<HealthResponse> {
   const response = await http.get<HealthResponse>("/health", {
-    validateStatus: (status) => status === 200 || status === 503,
+    validateStatus: acceptsHealthStatus,
   })
   return response.data
 }
