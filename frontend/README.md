@@ -19,6 +19,8 @@ npm run dev
 npm run build
 ```
 
+开发环境从 `.env.local` 读取 `http://127.0.0.1:8000/api/v1`。生产构建固定从 `.env.production` 读取同源 `/api/v1`，构建完成后访问 FastAPI 的 `http://127.0.0.1:8000`，无需单独运行 Vite preview。
+
 `VITE_API_BASE_URL` 只保存公开的后端 API 地址。数据库凭证、JWT Secret、用户密码和 Dify Key 不得放入前端配置。
 
 ## 认证流程
