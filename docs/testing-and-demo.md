@@ -79,11 +79,16 @@
 - 现有 Dify Chatflow 回答会把 `<think>...</think>` 推理文本直接展示给用户。修改 Chatflow 配置超出阶段 7A 范围，未处理。
 - 现有 operator 演示账号的显示名称在页面中含问号乱码。任务禁止清理或修改历史业务数据，未处理。
 - CDP Network 对开发问答未捕获到已完成的 POST 事件；生产同步和索引后复问均取得明确 `200` Network 证据，数据库记录用于交叉核验。
-- CentOS 尚未实测，不宣称通过。
+- CentOS 阶段 7B 已完成部署目录、依赖、测试构建、MySQL 逻辑备份、Systemd、Windows 外部访问和整机重启自恢复验证。
+- 远端 `alembic check` 报“删除 6 个 CHECK 约束”（`user_role`、`qa_record_feedback`、`work_order_status`、`work_order_log_from_status`、`work_order_log_to_status`、`knowledge_entry_status`）。经核实这些约束在模型与 migration 中均存在且语义一致，仅 model 中 `SqlEnum` 带 `length=8` 而 migration 未带的元数据差异，属 Alembic + MySQL 8 对 `native_enum=False` 约束的 autogenerate 误报；数据库已是 `20260807_05 (head)`，未执行任何迁移或约束修改。
 
-## 7B 待验证项
+## CentOS 阶段 7B 实测结果
 
-- CentOS Stream 9 真实版本与依赖安装结果。
-- 真实目录升级、数据库备份、Alembic upgrade、Systemd 安装和启动。
-- `http://192.168.100.42:8000` 页面、API、日志和重启行为。
-- 最终部署 commit/tag；阶段 7A 不创建。
+- CentOS Stream 9、Python 3.11、Node.js 22、npm、MySQL client 和项目依赖安装完成。
+- 精确部署 `cb7c346`；旧原型、旧 `.env` 和 MySQL 逻辑备份均在仓库外保留。
+- 后端 `154 passed`、静态托管专项 `4 passed`、前端 `19 passed`，Vite 生产构建成功。
+- `llm-ops-assistant.service` 已安装并处于 active/enabled；正式监听 `0.0.0.0:8000`。
+- CentOS 本机和 Windows 外部访问 `/api/v1/health`、`/`、`/chat` 均返回 200。
+- 整机重启后 MySQL 与应用服务自动恢复，8000 重新监听，内外部 HTTP 复验通过。
+- 未新增 Dify 文档，未修改 MySQL 授权或业务数据，未执行 Alembic migration。
+- 最终 commit/merge/tag 待 Git 收尾授权。完整命令与原因见 [`deployment/stage-7b-deployment-record.md`](../deployment/stage-7b-deployment-record.md)。

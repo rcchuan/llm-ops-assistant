@@ -1,6 +1,6 @@
 # CentOS Stream 9 部署
 
-本文覆盖新虚拟机部署和现有 `/root/Dify_agent` 升级。阶段 7A 仅准备命令框架和 Systemd unit，所有 CentOS 版本、命令输出与服务状态均待 7B 实测填写。
+本文覆盖新虚拟机部署和现有 `/root/Dify_agent` 升级。阶段 7B 已完成精确代码部署、依赖安装、测试构建、MySQL 逻辑备份、Systemd 常驻服务、Windows 外部访问和整机重启自恢复验证（部署基线 `cb7c346`）。完整实操、命令、原因和真实结果见 [阶段 7B 部署操作记录](stage-7b-deployment-record.md)。
 
 ## 部署边界
 
@@ -11,15 +11,15 @@
 
 ## 新虚拟机部署
 
-先记录系统和工具版本，再安装 Git、Python、Node/npm 与 MySQL client。以下输出待 7B 实测填写：
+先记录系统和工具版本，再安装 Git、Python、Node/npm 与 MySQL client。本机（阶段 7B 确认点 A）实测输出：
 
-```bash
-cat /etc/os-release
-git --version
-python3 --version
-node --version
-npm --version
-mysql --version
+```text
+CentOS Stream release 9
+git version 2.43.5
+Python 3.11.13        （系统默认 python3.9 改用 python3.11 满足 pwdlib/fastapi 依赖）
+v22.23.1              （AppStream nodejs:22 模块）
+10.9.8
+mysql  Ver 8.0.46
 ```
 
 通过 GitHub 获取代码是主路径：
@@ -56,7 +56,9 @@ git rev-parse HEAD
 
 ```bash
 cd /root/Dify_agent/backend
-python3 -m venv .venv
+# CentOS Stream 9 默认 python3 为 3.9，不满足 pwdlib/fastapi 依赖，须使用 python3.11
+python3.11 -m venv .venv
+./.venv/bin/python -m pip install --upgrade pip
 ./.venv/bin/python -m pip install -r requirements.txt
 cp .env.example .env
 chmod 600 .env
@@ -93,6 +95,15 @@ mysql -h <MYSQL_HOST> -u <MYSQL_USER> -p dify_ops < dify_ops-YYYYMMDD-HHMMSS.sql
 
 恢复会写入数据库，只能在明确指定的恢复窗口和目标库执行；阶段 7A/7B 验收不做完整恢复演练。
 
+阶段 7B 确认点 A 已生成一次仓库外逻辑备份（`llm_ops_app` 账号）：
+
+```text
+/root/db-backups/dify_ops-20260812_213952.sql
+12 张表全部包含（含 6 张业务表数据），大小 81,664 字节
+SHA-256: f955467deeabdc25f8a105a24ce2b1954e5efef00c2a4b0bbe447dac2affd162
+说明：llm_ops_app 无 PROCESS 权限，mysqldump 对 tablespace 元数据输出提示，但不影响表结构与数据导出。
+```
+
 ## Systemd
 
 仓库模板为 `deployment/llm-ops-assistant.service`。确认路径和配置后手工安装：
@@ -114,6 +125,14 @@ curl -i http://127.0.0.1:8000/api/v1/health
 curl -I http://127.0.0.1:8000/
 ```
 
-浏览器验收地址为 `http://192.168.100.42:8000`。CentOS 版本、安装命令输出、服务状态、页面结果及最终 commit/tag：**待 7B 实测填写**。
+浏览器验收地址为 `http://192.168.100.42:8000`。
+
+阶段 7B 确认点 A 临时 Uvicorn（`127.0.0.1:8000`）实测：
+
+- `/api/v1/health` → `200 application/json`，`database.status=up`，`dify_app/dify_dataset=configured`
+- `/` 与 `/chat`（深层路由）→ `200 text/html`
+- 未知 `/api/v1/*` 与缺失 `/assets/*` → `404 application/json`，不回退
+
+Systemd 安装启动、Windows 外部访问、后台日志和整机重启自恢复均已实测通过；最终 commit/tag 仍待 Git 收尾授权。
 
 阶段 7 不提供专项回滚流程；v1.0.0 发布后作为后续版本升级与容器化的稳定基线。

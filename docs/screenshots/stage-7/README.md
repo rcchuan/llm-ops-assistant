@@ -15,4 +15,7 @@
 | S7-WIN-PROD-05 `win-prod-knowledge-synced.png` | Windows 生产模式 | `KE-2` 已同步、文档 ID 和同步时间 | 知识沉淀验收 | 同步结果 | 经授权完成唯一同步并收到真实文档 ID 后重拍 |
 | S7-WIN-PROD-06 `win-prod-chat-after.png` | Windows 生产模式 | 同义问法命中新知识，展开来源显示 `[KE-2]` | 知识复用验收 | 闭环结果 | 等待索引后用不含唯一标识的同义问法，展开来源后重拍 |
 
-后续替换截图时必须使用新的脱敏案例，不能重复同步 `KE-2` 或新增阶段 7 第二条 Dify 文档。CentOS 截图待阶段 7B 实测后追加，不使用 Windows 截图冒充。
+| S7-CENTOS-01 `centos-login.png` | CentOS 正式环境 | Systemd 重启自恢复后的登录页 | 系统部署与测试 | 部署完成 | `http://192.168.100.42:8000` 无登录态访问；截图本身不含地址栏，地址由浏览器 URL 与外部 curl 200 交叉核验 |
+| S7-CENTOS-02 `centos-health.png` | CentOS 正式环境 | health 显示 API/MySQL up、Dify App/Dataset configured | 系统测试 | 健康检查 | 访问 `/api/v1/health`；截图本身不含地址栏，来源由浏览器 URL 与 curl 200 交叉核验 |
+
+后续替换截图时必须使用新的脱敏案例，不能重复同步 `KE-2` 或新增阶段 7 第二条 Dify 文档。CentOS 登录页和健康检查已实测追加；如需 CentOS 知识检索截图，应复用现有 `KE-2` 检索结果，不新增 Dataset 文档。

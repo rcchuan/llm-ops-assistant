@@ -12,3 +12,4 @@ Flask 原型相关 Dify 文档保留在 `prototype/docs/`。
 - [阶段 7 手动演示脚本](stage-7-demo-script.md)
 - [环境版本清单](environment-versions.md)
 - [阶段 7 截图索引](screenshots/stage-7/README.md)
+- [阶段 7B CentOS 部署操作记录](../deployment/stage-7b-deployment-record.md)

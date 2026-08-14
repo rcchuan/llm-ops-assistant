@@ -19,9 +19,23 @@
 | MySQL Server | 8.0.46（只读 `SELECT VERSION()`） |
 | 浏览器 | Google Chrome 148.0.7778.168 |
 
-## CentOS 阶段 7B
+## CentOS Stream 9 阶段 7B 实测
 
-- CentOS Stream 9 具体版本：待 7B 实测填写。
-- Python、Node/npm、MySQL client、Git、Systemd：待 7B 实测填写。
-- 部署目录与服务状态：待 7B 实测填写。
-- 最终 commit/tag：待 7B 实测填写；阶段 7A 不创建 commit 或 tag。
+采集日期：2026-08-12。已完成部署目录、依赖、测试构建、MySQL 逻辑备份、Systemd 安装启动、Windows 外部访问和整机重启自恢复验证。
+
+| 项目 | 版本 |
+| --- | --- |
+| OS | CentOS Stream release 9 |
+| Kernel | 5.14.0-511.el9.x86_64 |
+| Git | 2.43.5 |
+| Python（venv） | 3.11.13（系统默认 3.9 改用 python3.11 满足依赖） |
+| FastAPI / Starlette / Uvicorn | 0.141.1 / 1.6.0 / 0.52.1 |
+| SQLAlchemy / Alembic / PyMySQL | 2.0.52 / 1.19.1 / 1.2.0 |
+| Pytest / httpx / pydantic-settings | 9.1.1 / 0.28.1 / 2.15.0 |
+| Node.js / npm | 22.23.1 / 10.9.8（AppStream nodejs:22 模块） |
+| MySQL Server / client | 8.0.46 |
+| 部署目录 | `/root/Dify_agent`（Monorepo，精确 commit `cb7c346`） |
+| 数据库账号 | `llm_ops_app`（非 root），数据库 `dify_ops` |
+| Alembic revision | `20260807_05 (head)` |
+| 服务状态 | `llm-ops-assistant.service` active/enabled；整机重启后自动恢复，监听 `0.0.0.0:8000` |
+| 部署基线 / 最终 commit/tag | `cb7c346` / 待 Git 收尾授权 |

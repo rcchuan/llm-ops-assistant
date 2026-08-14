@@ -2,7 +2,7 @@
 
 本科毕业设计项目，目标是建立“智能问答 → 未解决问题转工单 → 管理员处理 → 解决方案沉淀知识 → Dify 知识库复用”的业务闭环。
 
-阶段 1～6 已完成工程化、认证权限、智能问答、工单闭环、知识沉淀、统计看板与健康检查。阶段 7 正在实施 Windows 生产构建与部署准备；智能问答仍是核心，工单只承接 AI 未解决问题，已确认的解决方案经管理员复核后首次同步到 Dify Dataset。
+阶段 1～7 已完成工程化、认证权限、智能问答、工单闭环、知识沉淀、统计看板、健康检查、完整测试与 CentOS Stream 9 部署验收。智能问答仍是核心，工单只承接 AI 未解决问题，已确认的解决方案经管理员复核后首次同步到 Dify Dataset。
 
 ## 技术栈
 
@@ -21,7 +21,7 @@ backend/     FastAPI 正式后端
 frontend/    Vue 3 正式前端
 dataset/     后续统一管理知识语料与评测数据
 docs/        正式项目文档
-deployment/  后续部署说明
+deployment/  CentOS 部署说明、Systemd unit 与阶段 7B 实操记录
 ```
 
 ## 运行顺序
@@ -36,6 +36,7 @@ deployment/  后续部署说明
 
 - [后端本地开发](backend/README.md) / [前端本地开发](frontend/README.md)
 - [CentOS Stream 9 部署](deployment/README.md)
+- [阶段 7B CentOS 完整部署操作记录](deployment/stage-7b-deployment-record.md)
 - [测试与演示记录](docs/testing-and-demo.md)
 - [阶段 7 手动演示脚本](docs/stage-7-demo-script.md)
 - [阶段 7 截图索引](docs/screenshots/stage-7/README.md)
@@ -45,9 +46,9 @@ deployment/  后续部署说明
 
 ## 当前范围
 
-已实现：Flask 原型隔离、FastAPI/Vue 工程、认证与用户管理、Dify blocking 问答、问答历史、本地反馈、工单闭环、候选知识、统计看板和健康检查。阶段 7A 增加同源生产构建、FastAPI 条件静态托管和部署文档。
+已实现：Flask 原型隔离、FastAPI/Vue 工程、认证与用户管理、Dify blocking 问答、问答历史、本地反馈、工单闭环、候选知识、统计看板和健康检查。阶段 7 完成同源生产构建、FastAPI 条件静态托管、Windows 完整闭环测试、CentOS Stream 9 部署、Systemd 常驻服务、数据库逻辑备份和整机重启自恢复验证。
 
-尚未完成：CentOS Stream 9 真实部署验收（阶段 7B）。多会话管理、流式输出、Refresh Token、注册、密码找回和通用知识库管理不在当前范围。
+不在当前范围：多会话管理、流式输出、Refresh Token、注册、密码找回和通用知识库管理。最终 Git 合并与 `v1.0.0` 标签需单独授权后执行。
 
 ## 安全边界
 
