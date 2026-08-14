@@ -1,132 +1,59 @@
-# 基于 Dify 的移动运维工单智能答疑机器人
+# 基于大语言模型的智能运维问答与工单辅助系统
 
-> 对标湖南移动运维 AI 业务：一线答疑、工单辅助、语料治理、功能自测
+本科毕业设计项目，目标是建立“智能问答 → 未解决问题转工单 → 管理员处理 → 解决方案沉淀知识 → Dify 知识库复用”的业务闭环。
 
-## 项目背景
-
-传统通信运维一线工单重复咨询量大、口径不统一；本项目基于 **Dify 云端智能体** + **Python 自动化** + **MySQL**，实现：
-
-- AI 一线运维答疑（可溯源引用）
-- 工单自动分类 / 去重 / 高频问题汇总
-- 语料批量清洗并 API 上传 Dify 知识库
-- 简易 Web 自测页
+阶段 1～7 已完成工程化、认证权限、智能问答、工单闭环、知识沉淀、统计看板、健康检查、完整测试与 CentOS Stream 9 部署验收。智能问答仍是核心，工单只承接 AI 未解决问题，已确认的解决方案经管理员复核后首次同步到 Dify Dataset。
 
 ## 技术栈
 
-| 组件 | 说明 |
-|------|------|
-| Python 3 | 主语言 |
-| MySQL 8 | 工单、问答日志、语料表 |
-| Dify OpenAPI | 云端 `https://api.dify.ai/v1` |
-| Flask + HTML/JS | 自测前端 |
+- 前端：Vue 3、Vite、TypeScript、Element Plus、Vue Router、Axios
+- 后端：FastAPI、SQLAlchemy、Alembic、Pydantic Settings、PyMySQL
+- 认证：Argon2 密码哈希、JWT Access Token
+- 数据库：MySQL 8
+- 测试：Pytest、隔离 SQLite、浏览器流程验证
+- AI 与知识库：Dify Cloud Chatflow API，由 FastAPI Integration 适配，前端不接触 Dify 凭证
 
-## 目录结构
+## 目录
 
-```
-Dify_agent/
-├── .env                    # 密钥配置（勿提交 Git）
-├── config.py               # 统一加载配置
-├── db_utils.py             # MySQL 工具
-├── dify_api.py             # 模块1：Dify 答疑 API + 日志入库
-├── work_order_sql.py       # 模块2：工单预处理
-├── data_clean.py           # 模块3：语料治理 + 上传知识库
-├── app.py                  # Flask 后端
-├── static/index.html       # 模块4：自测页
-├── sql/init.sql            # 建表 + 模拟工单
-├── data/corpus/            # 四类运维语料 Markdown
-├── scripts/
-│   ├── setup_mysql.ps1     # MySQL 一键初始化
-│   └── init_db.py          # 执行建表 SQL
-└── docs/
-    ├── CLOUD_DIFY_SETUP.md # 云端 Dify 配置说明
-    └── DIFY_AGENT_SETUP.md # 智能体编排说明
+```text
+prototype/   已验证的 Flask 原型，冻结保留
+backend/     FastAPI 正式后端
+frontend/    Vue 3 正式前端
+dataset/     后续统一管理知识语料与评测数据
+docs/        正式项目文档
+deployment/  CentOS 部署说明、Systemd unit 与阶段 7B 实操记录
 ```
 
-## 快速开始
+## 运行顺序
 
-### 1. 配置 `.env`
+1. 准备项目专用 MySQL 账号 `llm_ops_app`，仅授权访问 `dify_ops`。
+2. 配置 `backend/.env`，不要提交真实密码、JWT Secret 或初始管理员密码。
+3. 在 `backend/` 执行 `alembic upgrade head`。
+4. 临时启用初始管理员引导并启动 FastAPI；创建成功后关闭开关并清空初始密码配置。
+5. 启动 Vue 前端并使用管理员账号完成首次改密。
 
-复制 `.env.example` 为 `.env`，填写：
+## 使用与验收入口
 
-```env
-DIFY_APP_API_KEY=app-xxx
-DIFY_DATASET_API_KEY=dataset-xxx
-DIFY_DATASET_ID=uuid
-MYSQL_PASSWORD=你的密码
-```
+- [后端本地开发](backend/README.md) / [前端本地开发](frontend/README.md)
+- [CentOS Stream 9 部署](deployment/README.md)
+- [阶段 7B CentOS 完整部署操作记录](deployment/stage-7b-deployment-record.md)
+- [测试与演示记录](docs/testing-and-demo.md)
+- [阶段 7 手动演示脚本](docs/stage-7-demo-script.md)
+- [阶段 7 截图索引](docs/screenshots/stage-7/README.md)
+- [环境版本清单](docs/environment-versions.md)
 
-### 2. 安装 MySQL（Windows）
+认证与权限矩阵见 [docs/auth-and-rbac.md](docs/auth-and-rbac.md)，智能问答契约见 [docs/intelligent-chat.md](docs/intelligent-chat.md)，工单状态和权限见 [docs/work-order-flow.md](docs/work-order-flow.md)，候选知识与 Dify Dataset 契约见 [docs/knowledge-deposition.md](docs/knowledge-deposition.md)。
 
-**管理员 PowerShell**：
+## 当前范围
 
-```powershell
-cd D:\Dify_agent\scripts
-.\setup_mysql.ps1
-```
+已实现：Flask 原型隔离、FastAPI/Vue 工程、认证与用户管理、Dify blocking 问答、问答历史、本地反馈、工单闭环、候选知识、统计看板和健康检查。阶段 7 完成同源生产构建、FastAPI 条件静态托管、Windows 完整闭环测试、CentOS Stream 9 部署、Systemd 常驻服务、数据库逻辑备份和整机重启自恢复验证。
 
-默认 root 密码：`DifyOps@2026`（脚本会自动写入 `.env`）
+不在当前范围：多会话管理、流式输出、Refresh Token、注册、密码找回和通用知识库管理。最终 Git 合并与 `v1.0.0` 标签需单独授权后执行。
 
-### 3. 安装 Python 依赖并初始化库表
+## 安全边界
 
-```powershell
-cd D:\Dify_agent
-pip install -r requirements.txt
-python scripts/init_db.py
-```
-
-### 4. 上传语料到 Dify 知识库
-
-```powershell
-python data_clean.py --all
-```
-
-### 5. 工单预处理（可选）
-
-```powershell
-python work_order_sql.py --all
-```
-
-### 6. 命令行答疑测试
-
-```powershell
-python dify_api.py "MySQL主从延迟告警怎么处理？"
-python dify_api.py --interactive
-```
-
-### 7. 启动 Web 自测页
-
-```powershell
-python app.py
-```
-
-浏览器打开：http://127.0.0.1:5000/
-
-## 模块说明
-
-| 模块 | 文件 | 功能 |
-|------|------|------|
-| 1 | `dify_api.py` | 调用 Dify Chat API，问答日志入 MySQL |
-| 2 | `work_order_sql.py` | 工单正则分类、去重、高频问题推送 Dify |
-| 3 | `data_clean.py` | 语料清洗、导出 JSON、API 上传知识库 |
-| 4 | `static/index.html` + `app.py` | 前端自测 |
-
-## 语料分类
-
-| 文件 | 类别 |
-|------|------|
-| `server_fault.md` | 服务器故障 |
-| `database_error.md` | 数据库报错 |
-| `base_station.md` | 基站运维 |
-| `ticket_workflow.md` | 工单流程 |
-
-## 业务价值
-
-- 覆盖约 80% 基础运维重复答疑
-- 自动分拣重复工单、沉淀标准语料
-- 完全匹配移动运维智能化研发实习场景
-
-## 文档
-
-- [云端 Dify 配置](docs/CLOUD_DIFY_SETUP.md)
-- [智能体编排说明](docs/DIFY_AGENT_SETUP.md)
-- [本地 Dify Docker 教程](dify/SETUP_手把手教程.md)（可选）
+- 真实 `.env`、密码、API Key 和 Token 不得提交。
+- 前端只保存 Access Token，不保存数据库凭证、Dify Key 或密码。
+- `prototype/` 使用原有连接配置，正式后端使用 `llm_ops_app`，两者互不修改。
+- 旧原型 `work_orders` 原样保留；阶段 4 正式系统使用 `formal_work_orders` 和 `formal_work_order_logs`。
+- 初始化管理员成功后必须设置 `INITIAL_ADMIN_ENABLED=false` 并清空 `INITIAL_ADMIN_PASSWORD`。
