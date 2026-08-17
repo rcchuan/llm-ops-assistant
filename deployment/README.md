@@ -72,6 +72,18 @@ test -f dist/index.html
 
 真实密码、JWT Secret、Dify API Key 和 Dataset ID 只写入 `/root/Dify_agent/backend/.env`，不得进入 Git、终端截图或部署文档。前端生产配置只包含公开的 `VITE_API_BASE_URL=/api/v1`。
 
+## 初始化数据库
+
+首次部署时，使用仓库提供的脚本创建项目数据库和专用用户：
+
+```bash
+mysql -u root -p < /root/Dify_agent/deployment/init_database.sql
+```
+
+**执行前务必修改脚本中的默认密码** `CHANGE_ME_IN_PRODUCTION`。脚本会创建 `dify_ops` 库和 `llm_ops_app` 用户并授权。
+
+已有数据库时跳过此步。
+
 ## MySQL 与 Alembic
 
 先核对 MySQL Host、端口、数据库名及 `llm_ops_app` 的来源 Host/授权，再执行迁移：

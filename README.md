@@ -26,8 +26,8 @@ deployment/  CentOS 部署说明、Systemd unit 与阶段 7B 实操记录
 
 ## 运行顺序
 
-1. 准备项目专用 MySQL 账号 `llm_ops_app`，仅授权访问 `dify_ops`。
-2. 配置 `backend/.env`，不要提交真实密码、JWT Secret 或初始管理员密码。
+1. 初始化数据库：`mysql -u root -p < deployment/init_database.sql`（创建 `dify_ops` 库和 `llm_ops_app` 用户，**执行前修改脚本中的默认密码**）。
+2. 配置 `backend/.env`，填写上一步的数据库用户名和密码，不要提交真实密码、JWT Secret 或初始管理员密码。
 3. 在 `backend/` 执行 `alembic upgrade head`。
 4. 临时启用初始管理员引导并启动 FastAPI；创建成功后关闭开关并清空初始密码配置。
 5. 启动 Vue 前端并使用管理员账号完成首次改密。
